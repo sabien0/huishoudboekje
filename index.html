@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#2f6f5e">
+<title>Huishoudboekje</title>
+<style>
+.gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:10vh 16px 16px;overflow:auto}
+.gatebox{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}
+.gatebox h1{margin:0 0 12px}
+.gatebox label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);margin:10px 0}
+.gatebox input[type=password]{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink)}
+.gatebox label.chk{flex-direction:row;align-items:flex-start;gap:8px;color:var(--ink)}
+.gatebox label.chk input{margin-top:3px}
+.gatebox button.big{width:100%;padding:10px;font-size:15px;margin-top:6px}
+.gmsg{background:var(--soft);border-radius:7px;padding:8px 10px}
+button.link{border:none;background:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
+body.locked main{visibility:hidden}
+.acct{position:relative}
+.acct summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:5px 11px;background:var(--card)}
+.acct summary::-webkit-details-marker{display:none}
+.acctmenu{position:absolute;right:0;top:36px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:230px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.acctmenu button{text-align:left}
+@media (max-width:600px){ main{padding-top:14px} h1{font-size:19px} }
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1b;--muted:#6b6a66;--line:#e4e2dc;--accent:#2f6f5e;--warn:#b5562f;--soft:#efeee9}
+@media (prefers-color-scheme: dark){:root{--bg:#171716;--card:#21211f;--ink:#ecebe7;--muted:#a3a19b;--line:#34332f;--accent:#6cc0a6;--warn:#e69a72;--soft:#2a2a27}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1280px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 12px}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.privacy{border-left:3px solid var(--accent);padding:4px 0 4px 10px;margin-bottom:16px;color:var(--muted)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:26px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);color:var(--ink)}
+.drop b{color:var(--ink)}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:7px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+select,input[type=text],input[type=search]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;max-width:100%}
+nav.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+nav.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
+th{font-weight:600;color:var(--muted);font-size:12px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.click{cursor:pointer}td.click:hover{background:var(--soft)}
+tr.sec td{font-weight:700;background:var(--soft);padding-top:8px}
+tr.tot td{font-weight:700;border-bottom:2px solid var(--ink)}
+tr.un td{color:var(--warn)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.zero{color:var(--muted);opacity:.5}
+.neg{color:var(--warn)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.hidden{display:none!important}
+td.wrap{white-space:normal;min-width:220px;max-width:460px}
+.rules input{width:100%;min-width:280px}
+.files li{margin-bottom:8px}
+details summary{cursor:pointer;color:var(--muted)}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:8px}
+.map label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--soft);border-radius:8px;padding:10px 12px}
+.grp{padding:8px 0;border-bottom:1px solid var(--line)}
+.grphead{cursor:pointer}.grphead:hover b{text-decoration:underline}
+.track{position:relative;height:10px;background:var(--soft);border-radius:3px;margin:6px 0 4px}
+.track .bar{height:10px}
+.avg{position:absolute;top:-3px;width:2px;height:16px;background:var(--ink);opacity:.6}
+.subs{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
+.subs span{cursor:pointer}.subs span:hover{color:var(--ink)}
+.subs b{color:var(--ink);font-weight:600}
+.bar{height:12px;border-radius:3px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.help li{margin-bottom:3px}
+body.notx .needtx{display:none}
+body:not(.notx) .notxmsg{display:none}
+body.nosum .needsum{display:none}
+body:not(.nosum) .nosummsg{display:none}
+th.sort{cursor:pointer;user-select:none}th.sort:hover{color:var(--ink)}
+th.hist{color:var(--accent)}
+#vm input{width:105px;text-align:right;padding:4px 6px}
+#vm input[type=date]{width:140px;text-align:left}
+#vm input::placeholder{color:var(--ink);opacity:.55;font-style:italic}
+#vm td.calc{font-weight:600}
+.settings{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.settings label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+textarea{font:12px ui-monospace,Consolas,monospace;width:100%;min-height:120px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:16px}
+.charts .card{margin:0}
+.charts h2{margin-bottom:2px}
+.big{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.delta{font-size:12px;margin-left:6px}
+</style>
+</head>
+<body class="notx nosum locked">
+<div id="gate" class="gate"><div class="gatebox"><h1>🔒 Huishoudboekje</h1><div id="gateBody"><p class="muted">Laden…</p></div></div></div>
+<main>
+  <div class="row" style="margin-bottom:12px">
+    <h1 style="margin:0">Huishoudboekje</h1><span class="spacer"></span>
+    <span id="syncStatus" class="small muted"></span>
+    <button class="primary" id="drop">+ Bankbestand</button>
+    <details class="acct" id="acct"><summary title="Account">☰</summary>
+      <div class="acctmenu">
+        <div class="small muted" id="acctMail"></div>
+        <button id="aBackup">Back-up downloaden</button>
+        <button id="aChange">Wachtwoord wijzigen</button>
+        <button id="aLock">Vergrendelen op dit apparaat</button>
+        <button id="aLogout">Uitloggen</button>
+      </div>
+    </details>
+  </div>
+  <div class="privacy small">🔒 Versleuteld opgeslagen: online is alles onleesbaar zonder jullie wachtwoord. Je kunt een bankbestand (.csv/.txt) ook ergens op de pagina neerzetten.</div>
+  <div id="dropHint" class="toast">Laat los om het bestand te laden</div>
+
+  <div id="filesCard" class="card hidden">
+    <input type="file" id="file" accept=".csv,.txt,.tsv" multiple hidden>
+    <ul class="files" id="files" style="margin:0;padding-left:18px"></ul>
+    <details class="help"><summary>Hoe download ik mijn transacties?</summary>
+      <ul class="small">
+        <li><b>ING</b>: Mijn ING → rekening → Downloaden → formaat "Kommagescheiden CSV" of "Puntkommagescheiden".</li>
+        <li><b>Rabobank</b>: Rekening → Transacties downloaden → CSV.</li>
+        <li><b>ABN AMRO</b>: Bij- en afschrijvingen → Downloaden → TXT (tab-gescheiden).</li>
+        <li><b>ASN / SNS / RegioBank</b>: download de transacties als CSV, niet het rekeningafschrift (dat is een PDF).</li>
+        <li><b>bunq / Triodos</b>: CSV-export. Controleer bij "kolommen aanpassen" of datum en bedrag goed zijn herkend.</li>
+      </ul>
+    </details>
+  </div>
+
+  <div id="app">
+    <nav class="tabs">
+      <button data-tab="sum" class="on">Overzicht</button>
+      <button data-tab="un">Niet ingedeeld <span id="unCount"></span></button>
+      <button data-tab="tx">Transacties</button>
+      <button data-tab="rules">Trefwoorden</button>
+      <button data-tab="vm">Vermogen</button>
+    </nav>
+
+    <section id="tab-sum">
+      <div class="card nosummsg"><span class="muted">Voeg een bankbestand toe, of plak je bestaande cijfers uit Excel. Het tabblad Vermogen werkt ook zonder.<br>Heb je de offline versie gebruikt? Klik daar op Trefwoorden → <b>Instellingen exporteren</b> en zet dat bestand hier terug via Trefwoorden → <b>Importeren</b>.</span>
+        <div style="margin-top:8px"><button class="primary" data-histopen="1">Historie uit Excel plakken</button></div></div>
+      <div class="card hidden" id="histPanel">
+        <h2>Historie uit Excel</h2>
+        <p class="small muted" style="margin-top:0">Selecteer in je Excel het blok met de <b>kopregel met maanden</b> en alle categorierijen (de kolommen met groep en subcategorie plus de maandkolommen). Kopieer het en plak het hieronder. Rijen als "Uitgaven totaal" worden overgeslagen. Voor de maanden die je plakt, gebruikt het overzicht jouw Excel-cijfers in plaats van de banktransacties. Lege maanden worden overgeslagen.</p>
+        <textarea id="histText" placeholder="	Categorie	jan-25	feb-25	mrt-25 …"></textarea>
+        <div class="row" style="margin-top:6px">
+          <label class="small muted">Jaar (alleen nodig als de maanden geen jaartal hebben) <input type="text" id="histYear" inputmode="numeric" style="width:70px"></label>
+          <span class="spacer"></span>
+          <button class="primary" id="histImport">Importeren</button><button id="histClose">Sluiten</button>
+        </div>
+        <div id="histResult" class="small" style="margin-top:8px"></div>
+      </div>
+      <div class="card needsum">
+        <div class="row" style="margin-bottom:12px">
+          <button id="mPrev" title="Vorige maand">‹</button>
+          <select id="mSel" style="font-weight:600"></select>
+          <button id="mNext" title="Volgende maand">›</button>
+          <span class="muted small" id="mNote"></span>
+        </div>
+        <div class="tiles" id="mTiles"></div>
+        <div id="mGroups"></div>
+      </div>
+      <div class="card needsum">
+        <div class="row" style="margin-bottom:10px">
+          <h2 style="margin:0">Alle maanden</h2><span class="spacer"></span>
+          <button data-histopen="1">Historie uit Excel</button>
+          <button class="primary" id="copy">Kopieer voor Excel</button>
+          <button id="csv">Download CSV</button>
+        </div>
+        <p class="muted small" style="margin-top:0">Uitgaven en sparen staan als positieve bedragen. Klik op een bedrag om de transacties te zien. <span id="histNote"></span></p>
+        <div class="scroll"><table id="sum"></table></div>
+      </div>    </section>
+
+    <section id="tab-un" class="hidden">
+      <div class="card notxmsg muted">Laad eerst een bankbestand hierboven.</div>
+      <div class="card needtx">
+        <h2>Niet ingedeeld</h2>
+        <p class="muted small" style="margin-top:0">Gegroepeerd per tegenpartij. Pas het trefwoord eventueel aan, kies een categorie en klik op Toevoegen. Daarna worden ook toekomstige transacties met dat trefwoord automatisch ingedeeld.</p>
+        <div class="scroll"><table id="un"></table></div>
+      </div>
+    </section>
+
+    <section id="tab-tx" class="hidden">
+      <div class="card notxmsg muted">Laad eerst een bankbestand hierboven.</div>
+      <div class="card needtx">
+        <div class="row" style="margin-bottom:10px">
+          <input type="search" id="q" placeholder="Zoeken…">
+          <select id="fMonth"></select>
+          <select id="fCat"></select>
+          <button id="fReset">Wis filters</button>
+          <span class="spacer"></span><span class="muted small" id="txInfo"></span>
+        </div>
+        <div class="scroll"><table id="tx"></table></div>
+      </div>
+    </section>
+
+    <section id="tab-rules" class="hidden">
+      <div class="card">
+        <div class="row" style="margin-bottom:10px">
+          <h2 style="margin:0">Trefwoorden per categorie</h2><span class="spacer"></span>
+          <button id="exp">Instellingen exporteren</button>
+          <button id="imp">Importeren</button>
+          <button id="resetRules">Standaard herstellen</button>
+          <button id="wipeTx">Alle transacties wissen</button>
+          <input type="file" id="impFile" accept=".json" hidden>
+        </div>
+        <p class="muted small" style="margin-top:0">Komma-gescheiden. Een trefwoord wordt gezocht in naam, omschrijving en tegenrekening (hoofdletters maken niet uit). Het langste passende trefwoord wint. Je kunt ook een IBAN invullen, bijv. de rekening van je ouders bij "Ouders". Zet je eigen rekeningen onder <b>Negeren</b>, zodat overboekingen tussen je eigen rekeningen niet meetellen.</p>
+        <div class="scroll"><table class="rules" id="rules"></table></div>
+      </div>
+    </section>
+    <section id="tab-vm" class="hidden">
+      <div class="card">
+        <div class="row" style="margin-bottom:10px">
+          <h2 style="margin:0">Vermogen op de eerste van de maand</h2><span class="spacer"></span>
+          <button class="primary" id="vmAdd">+ Nieuwe maand</button>
+          <button id="vmCopy">Kopieer voor Excel</button>
+          <button id="vmPasteBtn">Plak uit Excel</button>
+        </div>
+        <p class="muted small" style="margin-top:0">Vul elke eerste van de maand je saldi in en het bedrag dat nog <b>openstaat</b> bij de Allianz-hypotheek (dus niet wat je die maand betaalde). Het openstaande bedrag van de <b>familiehypotheek</b> wordt berekend: openstaand vorige maand − (wat je die maand betaalde − de rente van die maand). <i>Schuin gedrukte bedragen</i> zijn berekend of standaardwaarden. Typ er een bedrag overheen om ze aan te passen, bijvoorbeeld de beginstand in de eerste rij of de rente uit je overzicht.</p>
+        <div id="vmPaste" class="hidden" style="margin-bottom:12px">
+          <p class="small muted" style="margin:0 0 6px">Selecteer in Excel je tabel <b>inclusief de kopregel</b> (Eerste van de maand, ASN betaal, …), kopieer met Ctrl+C en plak hieronder. De kolommen worden op naam herkend. Bestaande maanden worden overschreven. "Hypotheek Familie" wordt als vaste stand overgenomen.</p>
+          <textarea id="vmPasteText" placeholder="Eerste van de maand	ASN betaal	ASN spaar	…"></textarea>
+          <div id="vmResult" class="small" style="margin-top:6px"></div>
+          <div class="row" style="margin-top:6px"><button class="primary" id="vmImport">Importeren</button><button id="vmPasteCancel">Annuleren</button></div>
+        </div>
+        <div class="scroll"><table id="vm"></table></div>
+      </div>
+      <div id="vmChart" class="charts"></div>
+      <div class="card">
+        <h2>Instellingen</h2>
+        <div class="settings">
+          <label>Waarde huis (koopsom of WOZ)<input type="text" inputmode="decimal" data-vms="huis"></label>
+          <label>Familiehypotheek: vast maandbedrag<input type="text" inputmode="decimal" data-vms="famBedrag"></label>
+          <label>Familiehypotheek: rente % per jaar (optioneel, voor een schatting als je de rente nog niet weet)<input type="text" inputmode="decimal" data-vms="famRente"></label>
+        </div>
+        <div id="huisHint" class="small" style="margin-top:10px"></div>
+        <p class="muted small">Huis afbetaald = waarde huis − beide openstaande hypotheken (eigen geld + wat je hebt afgelost). Netto vermogen = totaal liquide − beide openstaande hypotheken.</p>
+        <div class="row"><button id="exp2">Back-up maken</button><button id="imp2">Back-up terugzetten</button>
+          <span class="muted small">Alles wordt automatisch versleuteld online opgeslagen. Een back-up is handig als je het wachtwoord ooit kwijtraakt. Bewaar het bestand veilig, want het is níet versleuteld.</span></div>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script>
+// ---------- Categorieën (zelfde opbouw als je Excel) ----------
+const STRUCT = [
+  ['Inkomsten', [['Salaris',['Luuk','Sabien']], ['Diversen',['Ouders','Koopzegels']]]],
+  ['Uitgaven', [
+    ['Huis',['Aankoopkosten','Dingen voor huis','Gemeente','GWL','Huur/hypotheek']],
+    ['Leven (nodig)',['Bankkosten','Boodschappen','Cadeaus + Goede doel','Drogist','Huisdier','Zakgeld','Diversen']],
+    ["Leven (extra's)",['Sport','Uit eten/drinken','Uitjes','Vakantie','Diversen']],
+    ['Vervoer',['Auto (lease)',"Auto (extra's)",'OV','Diversen']],
+    ['Abonnementen',['Google','Internet','Mobiele telefoon','Streaming']],
+    ['Verzekering',['Huisdierverzekering','Levensverzekering','Reisverzekering','WA en inboedel','Zorg (eigen risico)','Zorg (verzekering)']]
+  ]],
+  ['Sparen en beleggen', [['Beleggen',['DEGIRO','Holland Gold','Meesman']], ['Sparen',['Sparen']]]]
+];
+const COLORS = {'Huis':'#a85b8c','Leven (nodig)':'#7d9fab',"Leven (extra's)":'#e39a6a','Vervoer':'#d4a94e','Abonnementen':'#9b1240','Verzekering':'#4a72c4','Beleggen':'#86956a','Sparen':'#aebf8a'};
+const IGNORE = 'Negeren|Negeren|Eigen overboekingen';
+const CATS = [];
+STRUCT.forEach(([sec,groups])=>groups.forEach(([g,subs])=>subs.forEach(s=>CATS.push({id:sec+'|'+g+'|'+s,sec,group:g,sub:s}))));
+CATS.push({id:IGNORE,sec:'Negeren',group:'Negeren',sub:'Eigen overboekingen'});
+const CATMAP = Object.fromEntries(CATS.map(c=>[c.id,c]));
+const label = id => id==='?in'||id==='?out'||!id ? 'Niet ingedeeld' : (CATMAP[id] ? CATMAP[id].group+' – '+CATMAP[id].sub : id);
+
+// Standaard trefwoorden (aan te passen in het tabblad Trefwoorden)
+const D = {};
+const R = (sec,g,s,k) => D[sec+'|'+g+'|'+s] = k;
+R('Inkomsten','Salaris','Luuk','');
+R('Inkomsten','Salaris','Sabien','');
+R('Inkomsten','Diversen','Ouders','');
+R('Inkomsten','Diversen','Koopzegels','koopzegels, spaarzegels');
+R('Uitgaven','Huis','Aankoopkosten','notaris, makelaar, taxatie');
+R('Uitgaven','Huis','Dingen voor huis','ikea, gamma, praxis, karwei, hornbach, hema, bol.com, coolblue, leen bakker, kwantum, blokker, action, intratuin');
+R('Uitgaven','Huis','Gemeente','gemeente, waterschap, belastingsamenwerking, bsgw, gblt, svhw, cocensus, bghu, hhnk');
+R('Uitgaven','Huis','GWL','vattenfall, eneco, essent, greenchoice, budget energie, vandebron, energiedirect, oxxio, frank energie, tibber, vitens, evides, dunea, waternet, brabant water, pwn, wmd, oasen');
+R('Uitgaven','Huis','Huur/hypotheek','hypotheek');
+R('Uitgaven','Leven (nodig)','Bankkosten','kosten oranjepakket, kosten betaalpakket, basispakket, betaalpakket, kosten rekening, servicekosten');
+R('Uitgaven','Leven (nodig)','Boodschappen','albert heijn, ah to go, jumbo, lidl, aldi, plus, dirk, vomar, hoogvliet, coop, spar, dekamarkt, picnic, crisp, ekoplaza, poiesz, jan linders');
+R('Uitgaven','Leven (nodig)','Cadeaus + Goede doel','kwf, unicef, rode kruis, artsen zonder grenzen, greenpeace, wnf, amnesty, kika, giro555');
+R('Uitgaven','Leven (nodig)','Drogist','kruidvat, etos, trekpleister, da drogist, holland & barrett, douglas');
+R('Uitgaven','Leven (nodig)','Huisdier','zooplus, pets place, jumper, dierenarts, dierenkliniek, welkoop');
+R('Uitgaven','Leven (nodig)','Zakgeld','');
+R('Uitgaven','Leven (nodig)','Diversen','');
+R("Uitgaven","Leven (extra's)",'Sport','basic-fit, basic fit, sportschool, anytime fitness, sportcity, trainmore, decathlon');
+R("Uitgaven","Leven (extra's)",'Uit eten/drinken','thuisbezorgd, takeaway, uber eats, deliveroo, mcdonald, burger king, kfc, starbucks, new york pizza, domino, febo, restaurant, eetcafe, brasserie');
+R("Uitgaven","Leven (extra's)",'Uitjes','pathe, vue, kinepolis, efteling, ticketmaster, eventim, paylogic, ticketswap, museum');
+R("Uitgaven","Leven (extra's)",'Vakantie','booking.com, airbnb, transavia, klm, easyjet, ryanair, tui, corendon, center parcs, landal');
+R("Uitgaven","Leven (extra's)",'Diversen','');
+R('Uitgaven','Vervoer','Auto (lease)','lease');
+R('Uitgaven','Vervoer',"Auto (extra's)",'shell, bp, esso, tango, tinq, texaco, totalenergies, gulf, fastned, allego, vattenfall incharge, q-park, parkmobile, yellowbrick, easypark, parkeren, anwb');
+R('Uitgaven','Vervoer','OV','ns groep, ns reizigers, nederlandse spoorwegen, ov-chipkaart, translink, gvb, ret, htm, arriva, connexxion, qbuzz, keolis, ov-fiets');
+R('Uitgaven','Vervoer','Diversen','swapfiets, felyx');
+R('Uitgaven','Abonnementen','Google','google');
+R('Uitgaven','Abonnementen','Internet','ziggo, kpn, delta fiber, caiway, odido thuis');
+R('Uitgaven','Abonnementen','Mobiele telefoon','odido, t-mobile, vodafone, simyo, lebara, hollandsnieuwe, youfone, simpel, lycamobile');
+R('Uitgaven','Abonnementen','Streaming','netflix, spotify, disney, videoland, hbo, viaplay, prime video, youtube premium, npo plus');
+R('Uitgaven','Verzekering','Huisdierverzekering','petplan, figo, ohra huisdier');
+R('Uitgaven','Verzekering','Levensverzekering','overlijdensrisico, levensverzekering');
+R('Uitgaven','Verzekering','Reisverzekering','reisverzekering');
+R('Uitgaven','Verzekering','WA en inboedel','inboedel, aansprakelijkheid, centraal beheer, inshared, unive, ditzo, allianz');
+R('Uitgaven','Verzekering','Zorg (eigen risico)','eigen risico, apotheek');
+R('Uitgaven','Verzekering','Zorg (verzekering)','zilveren kruis, cz groep, vgz, menzis, dsw, onvz, zorgverzekering, interpolis zorg, fbto zorg, zekur');
+R('Sparen en beleggen','Beleggen','DEGIRO','degiro, flatex');
+R('Sparen en beleggen','Beleggen','Holland Gold','holland gold');
+R('Sparen en beleggen','Beleggen','Meesman','meesman');
+R('Sparen en beleggen','Sparen','Sparen','spaarrekening, oranje spaarrekening, spaardoel, bonusrente');
+D[IGNORE] = '';
+
+// ---------- Opslag ----------
+// Alles staat versleuteld online (zie "Online opslag" onderaan). store.set markeert alleen dat er iets
+// veranderd is; de opslag pakt dan de actuele gegevens en slaat ze versleuteld op.
+const store = {
+  get(k,d){ return d; },
+  set(k,v){ Cloud.dirty('main'); }
+};
+let rules = Object.assign({}, D);
+let overrides = {};
+let files = [], tx = [], compiled = [];
+let storedTx = [];              // alle bewaarde transacties (ook online)
+const droppedSrc = new Set();   // bestanden die je in deze sessie weer hebt verwijderd
+let fileSeq = 0;
+let filt = {q:'',month:'',cat:''};
+
+// ---------- Hulpfuncties ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const eur = v => (Math.abs(v)<0.005 ? 0 : v).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
+const monthLabel = m => new Date(+m.slice(0,4), +m.slice(5,7)-1, 1).toLocaleDateString('nl-NL',{month:'short',year:'numeric'});
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1800); }
+
+function mk(y,mo,d){ y=+y; mo=+mo; d=+d; if(mo<1||mo>12||d<1||d>31||y<1990||y>2100) return null; return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+const MAANDEN = {jan:1,feb:2,mrt:3,mar:3,maa:3,apr:4,mei:5,may:5,jun:6,jul:7,aug:8,sep:9,okt:10,oct:10,nov:11,dec:12};
+// Laat de opbouw van een regel zien zonder de inhoud: letters → a/A, cijfers → 9.
+// Een regel zonder cijfers (kopregel met kolomnamen) blijft leesbaar.
+const mask = line => /\d/.test(line) ? line.replace(/[A-Za-zÀ-ÿ]/g, c => c===c.toUpperCase() ? 'A' : 'a').replace(/\d/g,'9') : line;
+function pdate(s){
+  s = String(s ?? '').trim(); let m;
+  if ((m = s.match(/^(\d{4})(\d{2})(\d{2})$/))) return mk(m[1],m[2],m[3]);
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return mk(m[1],m[2],m[3]);
+  if ((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/))) return mk(m[3],m[2],m[1]);
+  if ((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2})(?!\d)/))) return mk(2000 + +m[3],m[2],m[1]);
+  if ((m = s.match(/^(?:[a-z]{2,3}\.?\s+)?(\d{1,2})[\s\-.]+([a-z]{3,})\.?[\s\-.]+(\d{4}|\d{2})(?!\d)/i))){ const i = MAANDEN[m[2].toLowerCase().slice(0,3)]; if (i) return mk(m[3].length===2 ? 2000 + +m[3] : m[3], i, m[1]); }
+  return null;
+}
+function num(s){
+  s = String(s ?? '').trim().replace(/[€\s]/g,''); if (!s) return NaN;
+  // "5.000" of "250.000" zonder komma = duizendtallen (Nederlandse notatie)
+  if (/^[+-]?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');
+  // "312,456" of "1,250,000" zonder decimalen = duizendtallen (Engelse notatie in Excel)
+  else if (/^[+-]?\d{1,3}(,\d{3})+$/.test(s)) s = s.replace(/,/g,'');
+  const lc = s.lastIndexOf(','), ld = s.lastIndexOf('.');
+  if (lc > ld) s = s.replace(/\./g,'').replace(',','.');
+  else if (lc >= 0) s = s.replace(/,/g,'');
+  return Number(s);
+}
+function detectDelim(text){
+  // Tel over de eerste regels (niet alleen de eerste: daar staat soms een titel)
+  const lines = text.split('\n').slice(0,30); const c = {';':0, ',':0, '\t':0};
+  for (const line of lines){ let q = false; for (const ch of line){ if (ch==='"') q=!q; else if (!q && ch in c) c[ch]++; } }
+  return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0];
+}
+function parseCSV(text, d){
+  const rows=[]; let row=[], f='', q=false;
+  for (let i=0;i<text.length;i++){
+    const c=text[i];
+    if (q){ if (c==='"'){ if (text[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+    else if (c==='"') q=true;
+    else if (c===d){ row.push(f); f=''; }
+    else if (c==='\n'){ row.push(f); rows.push(row); row=[]; f=''; }
+    else if (c!=='\r') f+=c;
+  }
+  if (f!=='' || row.length){ row.push(f); rows.push(row); }
+  return rows.filter(r=>r.some(x=>x.trim()!==''));
+}
+async function readFile(file){
+  const buf = await file.arrayBuffer();
+  let t = new TextDecoder('utf-8').decode(buf);
+  if (t.includes('�')) t = new TextDecoder('windows-1252').decode(buf);
+  return t.replace(/^﻿/,'');
+}
+
+// ---------- Kolommen herkennen ----------
+function guess(header){
+  const h = header.map(x=>x.toLowerCase().trim());
+  const find = (...res) => { for (const re of res){ const i=h.findIndex(x=>re.test(x)); if (i>=0) return i; } return -1; };
+  return {
+    date:   find(/^(datum|date|boekdatum|boekingsdatum|transactiedatum|transactiondate)$/, /^(?!.*rente)(?!.*interest).*(datum|date)/),
+    amount: find(/^bedrag( \(eur\))?$/, /^(amount|transactiebedrag)$/, /^(?!.*saldo).*(bedrag|amount)/),
+    sign:   find(/af ?\/? ?bij|bij ?\/? ?af/, /^(debet\/credit|credit\/debet|debit\/credit)$/),
+    name:   find(/naam tegenpartij/, /^naam \/ omschrijving$/, /^(naam|name)$/, /tegenpartij|counterparty|naam/),
+    own:    find(/^(rekening|iban\/bban|account|rekeningnummer|iban|rekening iban)$/),
+  };
+}
+function guessNoHeader(data, d, n){
+  if (d==='\t' && n>=8) return {date:2, amount:6, sign:-1, name:-1, own:0}; // ABN AMRO txt
+  const s = data.slice(0,30);
+  const isCol = (i,f) => s.filter(r=>f(r[i])).length >= s.length*0.8;
+  // ASN Bank (en SNS/RegioBank): datum, eigen IBAN, tegenrekening, naam, adres, postcode, plaats,
+  // valuta, saldo vóór mutatie, valuta, bedrag, journaaldatum, valutadatum, codes, volgnr, kenmerk, omschrijving, afschrift
+  if (n>=18 && isCol(0,pdate) && isCol(1,v=>/^[A-Z]{2}\d{2}[A-Z]{4}\d+$/i.test(String(v??'').trim())))
+    return {date:0, amount:10, sign:-1, name:3, own:1, skip:[4,5,6,7,8,9,11,12,13,14,15,18]};
+  let date=-1;
+  for (let i=0;i<n;i++) if (date<0 && isCol(i,pdate)) date=i;
+  // Bedragkolom: kolom met decimalen en de meeste negatieve bedragen (saldo is meestal positief)
+  let amount=-1, best=-1;
+  for (let i=0;i<n;i++){
+    if (i===date || !isCol(i,v=>/^[+-]?\d+[.,]\d{1,2}$/.test(String(v??'').trim()))) continue;
+    const negs = s.filter(r=>String(r[i]??'').trim().startsWith('-')).length;
+    if (negs>best){ best=negs; amount=i; }
+  }
+  return {date, amount, sign:-1, name:-1, own:-1};
+}
+function extractName(t){
+  let m = t.match(/\/name\/([^/]+)/i); if (m) return m[1].trim();
+  m = t.match(/naam:\s*(.+?)(?=\s+(omschrijving|kenmerk|machtiging|iban|bic|mandaat):|$)/i); if (m) return m[1].trim();
+  m = t.match(/\b(?:bea|gea)\b.*?\d{2}[.:]\d{2}\s+(.+?)(?:,\s*pas|$)/i); if (m) return m[1].trim().slice(0,50);
+  // Omschrijving die begint met een IBAN (ASN): "DE75 2022 0800 ... Vinted via Mangopay SA 7IJHJAC ..."
+  const rest = t.replace(/^[A-Z]{2}\d{2}(\s?[A-Z0-9]{4}){2,7}(\s?[A-Z0-9]{1,3})?\s+/i, '');
+  const words = []; for (const w of rest.split(' ')){ if (/\d/.test(w) || words.length>=6) break; words.push(w); }
+  if (words.length) return words.join(' ');
+  return t.slice(0,50);
+}
+
+// ---------- Transacties opbouwen ----------
+function buildTx(f){
+  const out=[], m=f.map;
+  const skip = new Set([m.date,m.amount,m.sign,m.own,...(m.skip||[])].filter(i=>i>=0));
+  f.header.forEach((h,i)=>{ if (/saldo|volgnr|munt|valuta|rentedatum|interest date/i.test(h)) skip.add(i); });
+  for (const r of f.data){
+    const date = pdate(r[m.date]); let amt = num(r[m.amount]);
+    if (!date || isNaN(amt)) continue;
+    if (m.sign>=0){
+      const s = String(r[m.sign]||'').trim().toLowerCase();
+      if (/^(af|d|debit|debet)$/.test(s)) amt = -Math.abs(amt);
+      else if (/^(bij|c|credit)$/.test(s)) amt = Math.abs(amt);
+    }
+    const text = r.filter((_,i)=>!skip.has(i)).join(' ').replace(/\s+/g,' ').trim();
+    const name = (m.name>=0 && String(r[m.name]||'').trim()) ? String(r[m.name]).trim() : extractName(text);
+    const desc = r.filter((_,i)=>!skip.has(i) && i!==m.name).join(' ').replace(/\s+/g,' ').trim();
+    out.push({date, month:date.slice(0,7), amt, name, desc, text:text.toLowerCase(),
+              key: date+'|'+amt.toFixed(2)+'|'+text.toLowerCase().slice(0,80)});
+  }
+  return out;
+}
+function rebuild(){
+  // Bewaarde transacties + die uit de bestanden van deze sessie. Pas je de kolommen van een bestand aan
+  // of verwijder je het, dan worden alleen de transacties uit dát bestand opnieuw ingelezen.
+  const cur = new Set(files.map(f=>f.id));
+  const base = storedTx.filter(t=>!(t.src && (cur.has(t.src) || droppedSrc.has(t.src))));
+  const seen = new Set(base.map(t=>t.key)); const added = [];
+  files.forEach(f=>{
+    const counts = {}; const built = buildTx(f);
+    f.count = built.length; f.newN = 0;
+    f.period = built.length ? built.map(t=>t.date).sort() : [];
+    built.forEach(t=>{ const n = counts[t.key] = (counts[t.key]||0)+1; t.key += '#'+n; t.src = f.id; if (!seen.has(t.key)){ seen.add(t.key); added.push(t); f.newN++; } });
+  });
+  storedTx = base.concat(added).sort((a,b)=> a.date<b.date ? -1 : a.date>b.date ? 1 : 0);
+  tx = storedTx;
+  Cloud.dirty('tx');
+  recat();
+}
+
+// ---------- Indelen ----------
+function compileRules(){
+  compiled = [];
+  for (const id in rules){
+    if (!CATMAP[id]) continue;
+    String(rules[id]||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean).forEach(k=>{
+      compiled.push({id, k, re:new RegExp('(^|[^a-z])'+reEsc(k)+'(?![a-z])')});
+    });
+  }
+  compiled.sort((a,b)=>b.k.length-a.k.length);
+}
+function categorize(t){
+  if (overrides[t.key] && CATMAP[overrides[t.key]]) return {id:overrides[t.key], by:'handmatig'};
+  for (const r of compiled) if (r.re.test(t.text)) return {id:r.id, by:r.k};
+  return {id:'', by:''};
+}
+const bucket = t => t.cat || (t.amt>=0 ? '?in' : '?out');
+function recat(){ compileRules(); tx.forEach(t=>{ const c=categorize(t); t.cat=c.id; t.by=c.by; }); render(); }
+function saveRules(){ store.set('rules', rules); }
+function saveOverrides(){ store.set('overrides', overrides); }
+
+// ---------- Weergave ----------
+function render(){
+  const hasSum = tx.length || Object.keys(hist).length;
+  document.body.classList.toggle('notx', !tx.length);
+  document.body.classList.toggle('nosum', !hasSum);
+  $('#filesCard').classList.toggle('hidden', !files.length && !!hasSum);
+  renderFiles(); renderRules(); renderHistInfo();
+  if (hasSum) renderSummary();
+  if (!tx.length) return;
+  renderUnmatched(); renderTx();
+}
+
+// ---------- Vermogen ----------
+let vm = store.get('vermogen', {settings:{}, rows:[]});
+const saveVm = () => store.set('vermogen', vm);
+const isNum = v => typeof v==='number' && isFinite(v);
+const r2 = v => Math.round(v*100)/100;
+const ASSETS = [['asnB','ASN betaal'],['asnS','ASN spaar'],['mees','Meesman'],['degiro','DEGIRO'],['gold','Holland Gold']];
+const fmtIn = v => isNum(v) ? eur(v) : '';
+const fmtOut = v => isNum(v) ? eur(v) : '–';
+
+function calcVm(){
+  vm.rows.sort((a,b)=>a.d<b.d?-1:1);
+  const S = vm.settings; let prev = null;
+  return vm.rows.map(r=>{
+    const liq = ASSETS.some(([k])=>isNum(r[k])) ? r2(ASSETS.reduce((a,[k])=>a+(isNum(r[k])?r[k]:0),0)) : NaN;
+    const famCalc = prev && isNum(prev.fam) ? r2(prev.fam - (prev.pay - prev.int)) : NaN;
+    // Een hypotheek is altijd schuld: ook als je hem in Excel negatief noteert
+    const fam = isNum(r.famOver) ? Math.abs(r.famOver) : famCalc;
+    const alli = isNum(r.alli) ? Math.abs(r.alli) : NaN;
+    const pay = isNum(r.famPay) ? r.famPay : (isNum(S.famBedrag) ? S.famBedrag : 0);
+    const intCalc = isNum(S.famRente) && isNum(fam) ? r2(fam*S.famRente/1200) : 0;
+    const int = isNum(r.famInt) ? r.famInt : intCalc;
+    const hyp = (isNum(alli)?alli:0) + (isNum(fam)?fam:0);
+    const known = isNum(alli) && isNum(fam);
+    const afb = isNum(S.huis) && known ? r2(S.huis - hyp) : NaN;
+    // Netto vermogen = wat je hebt min wat je schuldig bent (de waarde van het huis telt niet mee)
+    const net = known && isNum(liq) ? r2(liq - hyp) : NaN;
+    const pct = isNum(afb) && S.huis ? afb/S.huis : NaN;
+    return prev = {r, liq, fam, famCalc, pay, int, intCalc, hyp, afb, net, pct};
+  });
+}
+
+function renderVm(){
+  const S = vm.settings;
+  document.querySelectorAll('[data-vms]').forEach(i=>{ if (document.activeElement!==i) i.value = fmtIn(S[i.dataset.vms]); });
+  const rows = calcVm();
+  // Met welk huisbedrag rekent je Excel? Huis afbetaald (Excel) + beide openstaande hypotheken
+  const bases = rows.filter(c=>isNum(c.r.xlAfb) && isNum(c.r.alli) && isNum(c.r.famOver)).map(c=>r2(c.r.xlAfb + Math.abs(c.r.alli) + Math.abs(c.r.famOver))).sort((a,b)=>a-b);
+  const base = bases.length ? bases[Math.floor(bases.length/2)] : NaN;
+  $('#huisHint').innerHTML = isNum(base) && base>0 && (!isNum(S.huis) || Math.abs(base-S.huis)>=1)
+    ? `<span class="neg">Je Excel rekent bij "Huis afbetaald" met een huisbedrag van <b>€ ${eur(base)}</b>${isNum(S.huis)?`, hier staat € ${eur(S.huis)}`:''}.</span> <button data-sethuis="${base}">Gebruik € ${eur(base)}</button>`
+    : '';
+  const inp =(i,k,v,ph) => `<input type="text" inputmode="decimal" data-vm="${i}:${k}" value="${fmtIn(v)}" ${ph!==undefined&&isNum(ph)?`placeholder="${eur(ph)}"`:''}>`;
+  let h = `<thead><tr><th>Eerste van de maand</th>${ASSETS.map(a=>`<th class="n">${a[1]}</th>`).join('')}<th class="n">Totaal liquide</th>
+    <th class="n">Hypotheek Allianz<br>(nog open)</th><th class="n">Fam.: betaald<br>deze maand</th><th class="n">Fam.: rente<br>deze maand</th><th class="n">Hypotheek Familie<br>(nog open)</th>
+    <th class="n">Huis afbetaald</th><th class="n">Netto vermogen</th><th class="n">Huis afbetaald %</th><th></th></tr></thead><tbody>`;
+  rows.forEach((c,i)=>{
+    const r = c.r;
+    h += `<tr><td><input type="date" data-vm="${i}:d" value="${r.d}"></td>`
+      + ASSETS.map(([k])=>`<td class="n">${inp(i,k,r[k])}</td>`).join('')
+      + `<td class="n calc">${fmtOut(c.liq)}</td>`
+      + `<td class="n">${inp(i,'alli',r.alli)}</td>`
+      + `<td class="n">${inp(i,'famPay',r.famPay,isNum(S.famBedrag)?S.famBedrag:undefined)}</td>`
+      + `<td class="n">${inp(i,'famInt',r.famInt,isNum(S.famRente)?c.intCalc:undefined)}</td>`
+      + `<td class="n">${inp(i,'famOver',r.famOver,c.famCalc)}</td>`
+      + `<td class="n calc">${fmtOut(c.afb)}</td><td class="n calc">${fmtOut(c.net)}</td>`
+      + `<td class="n">${isNum(c.pct)?(c.pct*100).toLocaleString('nl-NL',{maximumFractionDigits:1})+'%':'–'}</td>`
+      + `<td><button data-vmdel="${i}" title="Rij verwijderen">×</button></td></tr>`;
+  });
+  if (!rows.length) h += `<tr><td colspan="16" class="muted">Nog geen maanden. Klik op "+ Nieuwe maand" of plak je historie uit Excel.</td></tr>`;
+  $('#vm').innerHTML = h + '</tbody>';
+  renderVmChart(rows);
+}
+
+function renderVmChart(rows){
+  // Drie losse grafieken: liquide, netto (incl. hypotheek) en huis afbetaald in euro's
+  const charts = [
+    ['liq', 'Totaal liquide', '#4a72c4', 'ASN, Meesman, DEGIRO en Holland Gold samen'],
+    ['net', 'Netto vermogen', 'var(--accent)', 'Totaal liquide − openstaande hypotheken'],
+    ['afb', 'Huis afbetaald', '#a85b8c', 'Waarde huis − Allianz − familiehypotheek'],
+  ];
+  $('#vmChart').innerHTML = charts.map(([key,title,col,sub])=>{
+    const pts = rows.map((c,i)=>({i, v:c[key], d:c.r.d})).filter(p=>isNum(p.v));
+    const last = pts[pts.length-1], before = pts[pts.length-2];
+    let head = `<h2>${title}</h2><div class="muted small" style="margin-bottom:6px">${sub}</div>`;
+    if (!last) return `<div class="card">${head}<p class="muted small">Nog geen gegevens.${key==='afb'?' Vul bij Instellingen de waarde van het huis in.':''}</p></div>`;
+    const dlt = before ? last.v - before.v : 0;
+    head += `<div><span class="big">€ ${eur(last.v)}</span>${before?`<span class="delta ${dlt<0?'neg':'muted'}">${dlt>=0?'+':''}${eur(dlt)} t.o.v. vorige maand</span>`:''}</div>`;
+    if (pts.length < 2) return `<div class="card">${head}<p class="muted small">Vanaf twee maanden zie je hier een grafiek.</p></div>`;
+    const W=420, H=170, P=46;
+    let lo = Math.min(...pts.map(p=>p.v)), hi = Math.max(...pts.map(p=>p.v));
+    const pad = (hi-lo)*0.1 || Math.abs(hi)*0.05 || 1; lo -= pad; hi += pad;
+    const x = n => P + n*(W-P-8)/(pts.length-1);
+    const y = v => H-22 - (v-lo)/(hi-lo)*(H-34);
+    const k = v => Math.abs(v)>=10000 ? Math.round(v/1000)+'k' : Math.abs(v)>=1000 ? (v/1000).toFixed(1).replace('.',',')+'k' : Math.round(v);
+    const line = pts.map((p,n)=>x(n).toFixed(1)+','+y(p.v).toFixed(1)).join(' ');
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="font-size:12px;display:block;margin-top:8px">`;
+    [lo+pad, (lo+hi)/2, hi-pad].forEach(v=>{ s += `<line x1="${P}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P-6}" y="${y(v)+3}" text-anchor="end" fill="var(--muted)">€ ${k(v)}</text>`; });
+    s += `<polygon points="${x(0)},${H-22} ${line} ${x(pts.length-1)},${H-22}" fill="${col}" opacity=".12"/>`;
+    s += `<polyline fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" points="${line}"/>`;
+    pts.forEach((p,n)=>{ s += `<circle cx="${x(n)}" cy="${y(p.v)}" r="${pts.length>24?0:3}" fill="${col}"><title>${monthLabel(p.d)}: € ${eur(p.v)}</title></circle>`; });
+    s += `<text x="${x(0)}" y="${H-6}" fill="var(--muted)">${monthLabel(pts[0].d)}</text><text x="${x(pts.length-1)}" y="${H-6}" text-anchor="end" fill="var(--muted)">${monthLabel(last.d)}</text>`;
+    return `<div class="card">${head}${s}</svg></div>`;
+  }).join('');
+}
+
+function vmNewRow(){
+  let d;
+  if (vm.rows.length){ const last = vm.rows[vm.rows.length-1].d; const y=+last.slice(0,4), m=+last.slice(5,7); d = m===12 ? (y+1)+'-01-01' : y+'-'+String(m+1).padStart(2,'0')+'-01'; }
+  else { const n = new Date(); d = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-01'; }
+  vm.rows.push({d}); saveVm(); renderVm();
+}
+
+function vmTable(){
+  const rows = calcVm(); const f = v => isNum(v) ? String(r2(v)).replace('.',',') : '';
+  const out = [['Eerste van de maand',...ASSETS.map(a=>a[1]),'Totaal liquide','Hypotheek Alianz','Hypotheek Familie','Huis afbetaald','Netto vermogen','','Huis afbetaald procentueel']];
+  rows.forEach(c=>{ const [y,m,d]=c.r.d.split('-');
+    out.push([`${+d}-${+m}-${y}`, ...ASSETS.map(([k])=>f(c.r[k])), f(c.liq), f(c.r.alli), f(c.fam), f(c.afb), f(c.net), '', isNum(c.pct)?String(r2(c.pct*100)).replace('.',',')+'%':'']); });
+  return out;
+}
+
+// Datum of maand in een cel: "1-1-2026", "01-01-26", "1-jan-26", "1 januari 2026", "jan-26", "januari 2026", "2026-01"
+const vmDate = s => { const d = pdate(s); if (d) return d.slice(0,8)+'01'; const m = pmonth(s, 0); return m ? m+'-01' : null; };
+function vmImport(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim()).map(l=>l.split('\t'));
+  // Standaard: jouw Excel-volgorde. Staat de kopregel erbij, dan zoeken we de kolommen op naam.
+  let col = {date:0, asnB:1, asnS:2, mees:3, degiro:4, gold:5, alli:7, famOver:8, xlAfb:9};
+  const head = lines.find(c=>c.some(x=>/meesman|degiro|liquide|hypotheek/i.test(x)));
+  if (head){
+    const f = re => head.findIndex(x=>re.test(x) && !/procent|%/i.test(x));
+    const byName = {date:f(/eerste|datum|maand/i), asnB:f(/betaal/i), asnS:f(/spaar/i), mees:f(/meesman/i), degiro:f(/degiro/i), gold:f(/gold|goud/i), alli:f(/allianz|alianz/i), famOver:f(/famil/i), xlAfb:f(/afbetaald/i)};
+    for (const k in byName) if (byName[k]>=0) col[k] = byName[k];
+  } else {
+    // Geen kopregel: begin bij de eerste kolom met een datum (soms staat er een lege kolom voor)
+    const first = lines.find(c=>c.slice(0,3).some(vmDate));
+    if (first){ const off = first.findIndex(x=>vmDate(x)); for (const k in col) col[k] += off; }
+  }
+  let n = 0; const bad = [];
+  lines.forEach(c=>{
+    if (c===head) return;
+    const d = vmDate(c[col.date]);
+    if (!d){ if (c.some(x=>x.trim())) bad.push(c.join(' | ')); return; }
+    const v = i => { const x = num(String(c[i]??'').replace('%','')); return isFinite(x) ? x : undefined; };
+    const row = {d};
+    for (const k of ['asnB','asnS','mees','degiro','gold','alli','famOver','xlAfb']){ const x = v(col[k]); if (x!==undefined) row[k] = x; }
+    if (isNum(row.alli)) row.alli = Math.abs(row.alli);
+    if (isNum(row.famOver)) row.famOver = Math.abs(row.famOver);
+    const old = vm.rows.find(r=>r.d===row.d);
+    if (old) Object.assign(old, row); else vm.rows.push(row);
+    n++;
+  });
+  saveVm(); renderVm(); return {n, bad};
+}
+
+function renderFiles(){
+  const fields = [['date','Datum'],['amount','Bedrag'],['sign','Af/Bij (optioneel)'],['name','Naam tegenpartij (optioneel)'],['own','Eigen rekening (optioneel)']];
+  $('#files').innerHTML = files.map((f,fi)=>{
+    const sample = f.data[0] || [];
+    const opts = sel => `<option value="-1">— geen —</option>` + f.header.map((h,i)=>`<option value="${i}" ${i===sel?'selected':''}>${esc(h)}${sample[i]!==undefined?' (bijv. "'+esc(String(sample[i]).slice(0,25))+'")':''}</option>`).join('');
+    const ok = f.count > 0;
+    if (f.bad) return `<li><div class="row"><b>${esc(f.name)}</b><span class="neg">${esc(f.warn)}</span><span class="spacer"></span><button data-rm="${fi}">Verwijderen</button></div></li>`;
+    return `<li><div class="row"><b>${esc(f.name)}</b>
+      <span class="${ok?'muted':'neg'}">${ok ? f.count+' van '+f.data.length+' regels herkend, '+f.period[0]+' t/m '+f.period[f.period.length-1]+' · '+f.newN+' nieuw'+(f.count-f.newN?', '+(f.count-f.newN)+' had je al':'') : (f.warn || 'Geen transacties herkend. Stel hieronder de kolommen in.')}</span>
+      <span class="spacer"></span><button data-rm="${fi}">Verwijderen</button></div>
+      <details ${ok?'':'open'}><summary>Kolommen aanpassen</summary>
+      <div class="map">${fields.map(([k,l])=>`<label>${l}<select data-f="${fi}" data-k="${k}">${opts(f.map[k])}</select></label>`).join('')}</div>
+      <div class="small muted" style="margin-top:12px">Anonieme opbouw van het bestand (letters → a, cijfers → 9). Hier staan geen gegevens van je in, dus je kunt dit veilig delen als de herkenning niet lukt.
+        <button data-copyraw="${fi}" style="margin-left:6px">Kopieer</button></div>
+      <pre class="small" style="overflow-x:auto;background:var(--soft);padding:8px;border-radius:6px;margin:6px 0 0">${esc((f.raw||[]).map(mask).join('\n'))}</pre></details></li>`;
+  }).join('');
+}
+
+function sumsBy(){
+  const s = {};
+  tx.forEach(t=>{ const b=bucket(t); s[b] = s[b] || {}; s[b][t.month] = (s[b][t.month]||0) + t.amt; });
+  // Maanden uit de Excel-historie vervangen de banktransacties van die maand
+  for (const m in hist){
+    for (const id in s) delete s[id][m];
+    for (const id in hist[m]){ if (!CATMAP[id]) continue; s[id] = s[id] || {}; s[id][m] = hist[m][id] * (CATMAP[id].sec==='Inkomsten' ? 1 : -1); }
+  }
+  return s;
+}
+
+// ---------- Historie uit Excel ----------
+let hist = store.get('hist', {});   // { '2025-01': { catId: bedrag (uitgaven positief) } }
+const MAAND_LANG = {januari:1,februari:2,maart:3,april:4,mei:5,juni:6,juli:7,augustus:8,september:9,oktober:10,november:11,december:12,january:1,february:2,march:3,may:5,june:6,july:7,august:8,october:10};
+function pmonth(s, year){
+  s = String(s||'').trim().toLowerCase().replace(/\.$/,''); if (!s) return null;
+  const d = pdate(s); if (d) return d.slice(0,7);
+  let m = s.match(/^(\d{4})[-\/](\d{1,2})$/); if (m && +m[2]>=1 && +m[2]<=12) return m[1]+'-'+m[2].padStart(2,'0');
+  m = s.match(/^(\d{1,2})[-\/](\d{4})$/); if (m && +m[1]>=1 && +m[1]<=12) return m[2]+'-'+m[1].padStart(2,'0');
+  m = s.match(/^([a-z]+)\.?[\s\-\/']*(\d{2}|\d{4})?$/);
+  if (m){
+    const mo = MAAND_LANG[m[1]] || (m[1].length<=4 ? MAANDEN[m[1].slice(0,3)] : 0); if (!mo) return null;
+    const y = m[2] ? (m[2].length===2 ? 2000 + +m[2] : +m[2]) : year; if (!y) return null;
+    return y+'-'+String(mo).padStart(2,'0');
+  }
+  return null;
+}
+function histImport(text, year){
+  const rows = text.split(/\r?\n/).map(l=>l.split('\t'));
+  let hi = -1, mcols = [];
+  for (let i=0; i<Math.min(rows.length,40); i++){
+    const cols = rows[i].map((c,j)=>[j, pmonth(c,year)]).filter(x=>x[1] && x[0]>0);
+    if (cols.length){ hi = i; mcols = cols; break; }
+  }
+  if (hi<0) return {err:'Geen maanden gevonden. Kopieer ook de kopregel met de maanden mee. Staat er geen jaartal bij de maanden? Vul dan het jaar in.'};
+  const sc = mcols[0][0]-1, gc = mcols[0][0]-2;
+  const norm = s => String(s||'').toLowerCase().replace(/[’‘`]/g,"'").replace(/\s+/g,' ').trim();
+  const byKey = {}; CATS.forEach(c=>{ byKey[norm(c.group)+'|'+norm(c.sub)] = c; });
+  const res = {}; mcols.forEach(([,m])=>res[m]={});
+  let group = '', matched = 0; const unknown = [];
+  for (const r of rows.slice(hi+1)){
+    const a = gc>=0 ? norm(r[gc]) : '', b = norm(r[sc]);
+    if (a) group = a;
+    if (!b) continue;
+    const cat = byKey[group+'|'+b];
+    if (!cat){ if (!/totaal|inkomsten - uitgaven|^sparen en beleggen$/.test(b)) unknown.push(r[sc].trim()); continue; }
+    matched++;
+    mcols.forEach(([j,m])=>{ const v = num(r[j]); if (isFinite(v)) res[m][cat.id] = (res[m][cat.id]||0) + v; });
+  }
+  if (!matched) return {err:'Geen categorieën herkend. Kopieer ook de twee kolommen met groep (bijv. "Huis") en subcategorie (bijv. "GWL") mee.'};
+  // Staan uitgaven in je Excel als negatieve bedragen? Dan omdraaien naar positief.
+  const ex = []; for (const m in res) for (const id in res[m]) if (CATMAP[id].sec!=='Inkomsten' && res[m][id]) ex.push(res[m][id]);
+  const flip = ex.filter(v=>v<0).length > ex.filter(v=>v>0).length;
+  const done = [];
+  for (const m in res){
+    if (!Object.values(res[m]).some(v=>Math.abs(v)>0.005)) continue; // lege maand overslaan
+    if (flip) for (const id in res[m]) if (CATMAP[id].sec!=='Inkomsten') res[m][id] = -res[m][id];
+    hist[m] = res[m]; done.push(m);
+  }
+  store.set('hist', hist);
+  return {months: done.sort(), matched, unknown: [...new Set(unknown)], flip};
+}
+function renderHistInfo(){
+  const ms = Object.keys(hist).sort();
+  $('#histNote').innerHTML = ms.length ? `<b>*</b> = maand uit je Excel-historie (${monthLabel(ms[0])} t/m ${monthLabel(ms[ms.length-1])}). <a href="#" data-histclear="1">Historie wissen</a>` : '';
+}
+
+let lastTable = [];
+function renderSummary(){
+  const months = [...new Set([...tx.map(t=>t.month), ...Object.keys(hist)])].sort();
+  const S = sumsBy();
+  const vals = (ids, sign) => months.map(m => sign * ids.reduce((a,id)=>a + ((S[id]||{})[m]||0), 0));
+  const rows = []; // {kind, group, sub, ids, v}
+  const totals = {};
+  STRUCT.forEach(([sec, groups])=>{
+    const sign = sec==='Inkomsten' ? 1 : -1;
+    rows.push({kind:'sec', group:sec});
+    const ids = [];
+    groups.forEach(([g,subs])=>subs.forEach((s,si)=>{
+      const id = sec+'|'+g+'|'+s; ids.push(id);
+      rows.push({kind:'sub', group:si===0?g:'', color:si===0?COLORS[g]:'', sub:s, ids:[id], v:vals([id],sign)});
+    }));
+    if (sec!=='Sparen en beleggen'){
+      const u = sec==='Inkomsten' ? '?in' : '?out'; ids.push(u);
+      const v = vals([u],sign);
+      if (v.some(x=>Math.abs(x)>0.005)) rows.push({kind:'sub', un:true, group:'', sub:'Niet ingedeeld', ids:[u], v});
+    }
+    totals[sec] = vals(ids, sign);
+    rows.push({kind:'tot', group:sec+' totaal', v:totals[sec]});
+  });
+  const io = totals['Inkomsten'].map((x,i)=>x - totals['Uitgaven'][i]);
+  rows.push({kind:'sec', group:'Totalen'});
+  rows.push({kind:'sub', group:'Inkomsten - Uitgaven (zonder sparen + beleggen)', sub:'', v:io});
+  rows.push({kind:'sub', group:'Sparen en beleggen', sub:'', v:totals['Sparen en beleggen']});
+  rows.push({kind:'tot', group:'Totaal alles', v:io.map((x,i)=>x - totals['Sparen en beleggen'][i])});
+  lastTable = {months, rows};
+
+  const n = months.length;
+  const cell = (x, attrs='') => {
+    const z = Math.abs(x) < 0.005;
+    return `<td class="n ${z?'zero':x<0?'neg':''} ${attrs?'click':''}" ${attrs}>${z?'–':eur(x)}</td>`;
+  };
+  let h = `<thead><tr><th></th><th></th>${months.map(m=>`<th class="n ${hist[m]?'hist':''}" ${hist[m]?'title="Uit je Excel-historie"':''}>${monthLabel(m)}${hist[m]?' *':''}</th>`).join('')}<th class="n">Totaal</th><th class="n">Gem. p/m</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    if (r.kind==='sec'){ h += `<tr class="sec"><td colspan="${n+4}">${esc(r.group)}</td></tr>`; return; }
+    const tot = r.v.reduce((a,b)=>a+b,0);
+    const dat = m => r.ids ? `data-ids="${esc(r.ids.join(','))}" data-m="${m}"` : '';
+    h += `<tr class="${r.kind==='tot'?'tot':''} ${r.un?'un':''}"><td>${r.color?`<span class="sw" style="background:${r.color}"></span>`:''}${esc(r.group)}</td><td>${esc(r.sub||'')}</td>`
+       + r.v.map((x,i)=>cell(x, dat(months[i]))).join('') + cell(tot, dat('')) + cell(tot/n) + '</tr>';
+  });
+  $('#sum').innerHTML = h + '</tbody>';
+  const sc = $('#sum').parentElement; sc.scrollLeft = sc.scrollWidth; // nieuwste maanden in beeld
+
+  lastS = S; lastMonths = months;
+  if (!months.includes(selMonth)) selMonth = months[months.length-1];
+  renderMonth();
+}
+
+// ---------- Eén maand ----------
+let lastS = {}, lastMonths = [], selMonth = '';
+function renderMonth(){
+  const S = lastS, months = lastMonths, m = selMonth, idx = months.indexOf(m);
+  $('#mSel').innerHTML = months.slice().reverse().map(x=>`<option value="${x}" ${x===m?'selected':''}>${new Date(+x.slice(0,4), +x.slice(5,7)-1, 1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'})}${hist[x]?' *':''}</option>`).join('');
+  $('#mPrev').disabled = idx<=0; $('#mNext').disabled = idx>=months.length-1;
+  $('#mNote').textContent = hist[m] ? '* cijfers uit je Excel-historie' : '';
+  const raw = (id, mm=m) => (S[id]||{})[mm]||0;
+  const sumIds = (ids, mm) => ids.reduce((a,id)=>a+raw(id,mm),0);
+  const idsOf = sec => CATS.filter(c=>c.sec===sec).map(c=>c.id);
+  const inc = sumIds([...idsOf('Inkomsten'),'?in'], m);
+  const out = -sumIds([...idsOf('Uitgaven'),'?out'], m);
+  const sav = -sumIds(idsOf('Sparen en beleggen'), m);
+  const left = inc - out - sav;
+  const tile = (l, v, cls='') => `<div class="tile"><div class="muted small">${l}</div><div class="big ${cls}">€ ${eur(v)}</div></div>`;
+  $('#mTiles').innerHTML = tile('Inkomsten', inc) + tile('Uitgaven', out) + tile('Gespaard en belegd', sav) + tile('Over', left, left<0?'neg':'');
+
+  // Uitgaven per groep deze maand, vergeleken met het gemiddelde van de andere maanden
+  const others = months.filter(x=>x!==m);
+  const groups = STRUCT[1][1].map(([name,subs])=>{
+    const ids = subs.map(s=>'Uitgaven|'+name+'|'+s);
+    const v = -sumIds(ids, m);
+    const avg = others.length ? -others.reduce((a,x)=>a+sumIds(ids,x),0)/others.length : NaN;
+    const subsV = subs.map((s,i)=>({s, id:ids[i], v:-raw(ids[i])})).filter(x=>Math.abs(x.v)>0.005);
+    return {name, v, avg, ids, subsV, color:COLORS[name]};
+  });
+  const un = -raw('?out');
+  if (Math.abs(un)>0.005) groups.push({name:'Niet ingedeeld', v:un, avg:NaN, ids:['?out'], subsV:[], color:'var(--warn)'});
+  const max = Math.max(1, ...groups.map(g=>Math.max(g.v, isNum(g.avg)?g.avg:0)));
+  $('#mGroups').innerHTML = `<h2 style="margin-top:18px">Uitgaven in ${monthLabel(m)}</h2>` + groups.map(g=>{
+    const diff = isNum(g.avg) ? g.v - g.avg : NaN;
+    const cmp = isNum(diff) && Math.abs(diff)>=1 ? `<span class="${diff>0?'neg':'muted'}">${diff>0?'+':'−'}€ ${eur(Math.abs(diff))} t.o.v. gemiddeld</span>` : '';
+    return `<div class="grp">
+      <div class="row grphead" data-ids="${esc(g.ids.join(','))}" data-m="${m}" title="Toon transacties">
+        <span class="sw" style="background:${g.color}"></span><b>${esc(g.name)}</b><span class="spacer"></span>
+        <span class="small">${cmp}</span><b class="n" style="min-width:100px;text-align:right">€ ${eur(g.v)}</b></div>
+      <div class="track"><div class="bar" style="width:${Math.max(0,g.v/max*100)}%;background:${g.color}"></div>${isNum(g.avg)&&g.avg>0?`<div class="avg" style="left:${g.avg/max*100}%" title="Gemiddeld € ${eur(g.avg)}"></div>`:''}</div>
+      ${g.subsV.length ? `<div class="subs">${g.subsV.map(x=>`<span data-ids="${esc(x.id)}" data-m="${m}">${esc(x.s)} <b>€ ${eur(x.v)}</b></span>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('') + (others.length ? '<p class="muted small">Het streepje op de balk is je gemiddelde van de andere maanden.</p>' : '');
+}
+
+function catOptions(selected, withAuto){
+  let o = withAuto ? `<option value="">— automatisch —</option>` : '';
+  let lastSec = '';
+  CATS.forEach(c=>{
+    if (c.sec!==lastSec){ if (lastSec) o += '</optgroup>'; o += `<optgroup label="${esc(c.sec)}">`; lastSec=c.sec; }
+    o += `<option value="${esc(c.id)}" ${c.id===selected?'selected':''}>${esc(c.group+' – '+c.sub)}</option>`;
+  });
+  return o + '</optgroup>';
+}
+const normName = s => String(s||'').toLowerCase().replace(/\S*\d\S*/g,' ').replace(/[^a-z&.\- ]/g,' ').replace(/\s+/g,' ').trim();
+
+// Standaard: grootste uitgaven bovenaan. Trefwoord A→Z, Aantal hoog→laag bij eerste klik.
+let unSort = {key:'sum', dir:1};
+function renderUnmatched(){
+  const groups = {};
+  tx.filter(t=>!t.cat).forEach(t=>{
+    const k = normName(t.name) || normName(t.desc).slice(0,30) || '(onbekend)';
+    const g = groups[k] = groups[k] || {k, n:0, sum:0, ex:t};
+    g.n++; g.sum += t.amt;
+  });
+  const {key, dir} = unSort;
+  const list = Object.values(groups).sort((a,b)=> dir * (key==='k' ? a.k.localeCompare(b.k,'nl') : a[key]-b[key]) || a.k.localeCompare(b.k,'nl'));
+  $('#unCount').textContent = list.length ? '('+tx.filter(t=>!t.cat).length+')' : '';
+  if (!list.length){ $('#un').innerHTML = '<tr><td class="muted">Alles is ingedeeld. 🎉</td></tr>'; return; }
+  const opts = catOptions('', false);
+  const th = (k, l, cls='') => `<th class="sort ${cls}" data-usort="${k}" title="Klik om te sorteren">${l}${key===k ? (dir>0?' ▲':' ▼') : ''}</th>`;
+  $('#un').innerHTML = `<thead><tr>${th('k','Trefwoord')}<th>Voorbeeld</th>${th('n','Aantal','n')}${th('sum','Totaal','n')}<th>Categorie</th><th></th></tr></thead><tbody>`
+    + list.slice(0,300).map((g,i)=>`<tr><td><input type="text" value="${esc(g.k)}" id="uk${i}"></td>
+      <td class="wrap small muted">${esc(g.ex.name)} · ${esc(g.ex.desc.slice(0,90))}</td>
+      <td class="n">${g.n}</td><td class="n ${g.sum<0?'neg':''}">${eur(g.sum)}</td>
+      <td><select id="uc${i}"><option value="">Kies…</option>${opts}</select></td>
+      <td><button data-add="${i}">Toevoegen</button></td></tr>`).join('') + '</tbody>';
+}
+
+function renderTx(){
+  const months = [...new Set(tx.map(t=>t.month))].sort();
+  $('#fMonth').innerHTML = `<option value="">Alle maanden</option>` + months.map(m=>`<option value="${m}" ${m===filt.month?'selected':''}>${monthLabel(m)}</option>`).join('');
+  $('#fCat').innerHTML = `<option value="">Alle categorieën</option><option value="?in,?out" ${filt.cat==='?in,?out'?'selected':''}>Niet ingedeeld</option>` + catOptions(filt.cat, false)
+    + (filt.cat && filt.cat.includes(',') && filt.cat!=='?in,?out' ? '' : '');
+  if (filt.cat && !$('#fCat').querySelector(`option[value="${CSS.escape(filt.cat)}"]`)) $('#fCat').insertAdjacentHTML('beforeend', `<option value="${esc(filt.cat)}" selected>${esc(filt.cat.split(',').map(label).join(' + '))}</option>`);
+  $('#q').value = filt.q;
+  const cats = filt.cat ? filt.cat.split(',') : null;
+  const q = filt.q.toLowerCase();
+  const list = tx.filter(t=>(!filt.month || t.month===filt.month) && (!cats || cats.includes(bucket(t))) && (!q || t.text.includes(q) || t.name.toLowerCase().includes(q)));
+  const total = list.reduce((a,t)=>a+t.amt,0);
+  $('#txInfo').textContent = list.length+' transacties · saldo € '+eur(total) + (list.length>500?' · eerste 500 getoond':'');
+  const shown = list.slice().reverse().slice(0,500);
+  $('#tx').innerHTML = `<thead><tr><th>Datum</th><th>Naam</th><th>Omschrijving</th><th class="n">Bedrag</th><th>Categorie</th></tr></thead><tbody>`
+    + shown.map(t=>`<tr><td>${t.date}</td><td>${esc(t.name.slice(0,40))}</td><td class="wrap small muted">${esc(t.desc.slice(0,120))}</td>
+      <td class="n ${t.amt<0?'neg':''}">${eur(t.amt)}</td>
+      <td><select data-key="${esc(t.key)}">${overrides[t.key] ? catOptions(overrides[t.key], true) : `<option value="">${esc(label(t.cat))}${t.by?' (via "'+esc(t.by)+'")':''}</option>`+catOptions('',false)}</select></td></tr>`).join('') + '</tbody>';
+}
+
+function renderRules(){
+  if ($('#rules').dataset.done) return;
+  $('#rules').dataset.done = 1;
+  let lastSec = '';
+  $('#rules').innerHTML = '<tbody>' + CATS.map(c=>{
+    let h = '';
+    if (c.sec!==lastSec){ h += `<tr class="sec"><td colspan="3">${esc(c.sec)}</td></tr>`; lastSec=c.sec; }
+    return h + `<tr><td>${COLORS[c.group]?`<span class="sw" style="background:${COLORS[c.group]}"></span>`:''}${esc(c.group)}</td><td>${esc(c.sub)}</td>
+      <td style="width:100%"><input type="text" data-rule="${esc(c.id)}" value="${esc(rules[c.id]||'')}" placeholder="${c.id===IGNORE?'jouw eigen IBANs, bijv. NL00INGB0001234567':c.sub==='Luuk'||c.sub==='Sabien'?'naam werkgever, bijv. salaris':''}"></td></tr>`;
+  }).join('') + '</tbody>';
+}
+
+// ---------- Kopiëren / downloaden ----------
+function tableRows(dec){
+  const {months, rows} = lastTable; const n = months.length;
+  const f = x => (Math.round(x*100)/100).toFixed(2).replace('.', dec);
+  const out = [['','',...months.map(monthLabel),'Totaal','Gem. p/m']];
+  rows.forEach(r=>{
+    if (r.kind==='sec'){ out.push([r.group]); return; }
+    const tot = r.v.reduce((a,b)=>a+b,0);
+    out.push([r.group, r.sub||'', ...r.v.map(f), f(tot), f(tot/n)]);
+  });
+  return out;
+}
+async function copyText(t){
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch(e){ const a=document.createElement('textarea'); a.value=t; document.body.appendChild(a); a.select(); const ok=document.execCommand('copy'); a.remove(); return ok; }
+}
+function download(name, text, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text],{type})); a.download = name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---------- Events ----------
+const drop = $('#drop'), fileIn = $('#file');
+drop.onclick = () => fileIn.click();
+fileIn.onchange = () => { addFiles(fileIn.files); fileIn.value=''; };
+// Bestand ergens op de pagina neerzetten
+let dragN = 0;
+const isFileDrag = e => [...(e.dataTransfer?.types||[])].includes('Files');
+document.addEventListener('dragenter', e => { if (!isFileDrag(e)) return; dragN++; $('#dropHint').classList.add('show'); });
+document.addEventListener('dragleave', e => { if (!isFileDrag(e)) return; if (--dragN<=0){ dragN=0; $('#dropHint').classList.remove('show'); } });
+document.addEventListener('dragover', e => { if (isFileDrag(e)) e.preventDefault(); });
+document.addEventListener('drop', e => { if (!isFileDrag(e)) return; e.preventDefault(); dragN=0; $('#dropHint').classList.remove('show'); addFiles(e.dataTransfer.files); });
+const goMonth = d => { const i = lastMonths.indexOf(selMonth)+d; if (lastMonths[i]){ selMonth = lastMonths[i]; renderMonth(); } };
+$('#mPrev').onclick = () => goMonth(-1);
+$('#mNext').onclick = () => goMonth(1);
+$('#mSel').onchange = e => { selMonth = e.target.value; renderMonth(); };
+
+async function addFiles(list){
+  for (const file of list){
+    const text = await readFile(file);
+    const raw = text.split(/\r?\n/).filter(l=>l.trim()).slice(0,6);
+    let warn = '';
+    const head = text.slice(0,2048);
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (head.includes('%PDF') || ext==='pdf') warn = 'Dit is een PDF (rekeningafschrift). Die kan deze pagina niet lezen. Download je transacties als CSV.';
+    else if (head.startsWith('PK') || ext==='xlsx' || ext==='xls') warn = 'Dit is een Excel-bestand. Kies bij het downloaden CSV, of sla het in Excel op als "CSV (gescheiden door lijstscheidingsteken)".';
+    else if (/^\s*<\?xml|<Document/.test(head)) warn = 'Dit is een XML-bestand (CAMT). Kies bij het downloaden CSV.';
+    else if (/^:20:|\{1:/m.test(head)) warn = 'Dit is een MT940-bestand. Kies bij het downloaden CSV.';
+    else if ((head.match(/[\x00-\x08\x0E-\x1F]/g)||[]).length > 5) warn = 'Dit bestand is geen tekstbestand. Download je transacties als CSV.';
+    if (warn){ files.push({id:'f'+(++fileSeq), name:file.name, header:[], data:[], map:{date:-1,amount:-1,sign:-1,name:-1,own:-1}, raw:[], warn, bad:true}); continue; }
+    const d = detectDelim(text);
+    // ASN zet tekstvelden soms tussen enkele aanhalingstekens: 'Albert Heijn'
+    const rows = parseCSV(text, d).map(r=>r.map(c=>c.trim().replace(/^'(.*)'$/s,'$1').trim()));
+    if (!rows.length) continue;
+    // Zoek de kopregel: soms staan er eerst regels met rekeninggegevens boven
+    const isHead = r => !r.some(c=>pdate(c)) && r.some(c=>/datum|date/i.test(c)) && r.some(c=>/bedrag|amount/i.test(c));
+    const hi = rows.slice(0,25).findIndex(isHead);
+    const hasHeader = hi >= 0;
+    const firstData = hasHeader ? hi+1 : Math.max(0, rows.findIndex(r=>r.some(c=>pdate(c))));
+    const data = rows.slice(firstData);
+    const ncol = data.reduce((a,r)=>Math.max(a,r.length),0);
+    const header = hasHeader ? rows[hi].map(x=>x.trim()) : Array.from({length:ncol},(_,i)=>'Kolom '+(i+1));
+    const map = hasHeader ? guess(header) : guessNoHeader(data,d,ncol);
+    if (map.skip) ['Boekingsdatum','Eigen rekening','Tegenrekening','Naam tegenrekening','Adres','Postcode','Plaats','Valuta rekening','Saldo vóór mutatie','Valuta mutatie','Transactiebedrag','Journaaldatum','Valutadatum','Interne code','Globale code','Volgnummer','Betalingskenmerk','Omschrijving','Afschriftnummer'].forEach((h,i)=>{ if (i<header.length) header[i]=h; });
+    files.push({id:'f'+(++fileSeq), name:file.name, header, data, map, raw, warn});
+  }
+  rebuild();
+}
+
+document.addEventListener('change', e=>{
+  const el = e.target;
+  if (el.dataset.vm !== undefined){
+    const [i,k] = el.dataset.vm.split(':'); const row = vm.rows[+i];
+    if (k==='d'){ if (el.value) row.d = el.value; }
+    else { const x = num(el.value); if (isFinite(x)) row[k] = r2(x); else delete row[k]; }
+    saveVm(); renderVm();
+  }
+  else if (el.dataset.vms !== undefined){
+    const x = num(el.value); if (isFinite(x)) vm.settings[el.dataset.vms] = x; else delete vm.settings[el.dataset.vms];
+    saveVm(); renderVm();
+  }
+  else if (el.dataset.f !== undefined){ files[+el.dataset.f].map[el.dataset.k] = +el.value; rebuild(); }
+  else if (el.dataset.key !== undefined){
+    if (el.value) overrides[el.dataset.key] = el.value; else delete overrides[el.dataset.key];
+    saveOverrides(); recat();
+  }
+  else if (el.dataset.rule !== undefined){ rules[el.dataset.rule] = el.value; saveRules(); recat(); toast('Trefwoorden opgeslagen'); }
+  else if (el.id==='fMonth'){ filt.month = el.value; renderTx(); }
+  else if (el.id==='fCat'){ filt.cat = el.value; renderTx(); }
+});
+$('#q').oninput = e => { filt.q = e.target.value; renderTx(); };
+$('#fReset').onclick = () => { filt = {q:'',month:'',cat:''}; renderTx(); };
+
+function showTab(name){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.tab===name));
+  ['sum','un','tx','rules','vm'].forEach(t=>$('#tab-'+t).classList.toggle('hidden', t!==name));
+}
+document.addEventListener('click', async e=>{
+  const el = e.target.closest('button, td.click, th[data-usort], a[data-histclear], #mGroups [data-ids]'); if (!el) return;
+  if (el.dataset.tab) showTab(el.dataset.tab);
+  else if (el.dataset.usort){
+    const k = el.dataset.usort;
+    unSort = unSort.key===k ? {key:k, dir:-unSort.dir} : {key:k, dir: k==='n' ? -1 : 1};
+    renderUnmatched();
+  }
+  else if (el.dataset.histopen){ $('#histPanel').classList.remove('hidden'); $('#histResult').innerHTML=''; $('#histText').focus(); }
+  else if (el.id==='histClose'){ $('#histPanel').classList.add('hidden'); }
+  else if (el.id==='histImport'){
+    const r = histImport($('#histText').value, +$('#histYear').value || 0);
+    if (r.err){ $('#histResult').innerHTML = `<span class="neg">${esc(r.err)}</span>`; return; }
+    $('#histResult').innerHTML = r.months.length
+      ? `✓ ${r.months.length} maanden geïmporteerd (${monthLabel(r.months[0])} t/m ${monthLabel(r.months[r.months.length-1])}), ${r.matched} categorieën herkend.`
+        + (r.flip ? ' Je uitgaven stonden als negatieve bedragen; die zijn omgezet naar positief.' : '')
+        + (r.unknown.length ? `<br><span class="neg">Niet herkend en overgeslagen: ${esc(r.unknown.join(', '))}</span>` : '')
+      : '<span class="neg">Alle maanden waren leeg, er is niets geïmporteerd.</span>';
+    $('#histText').value = ''; render();
+  }
+  else if (el.dataset.histclear){
+    e.preventDefault();
+    if (confirm('De geïmporteerde Excel-historie wissen? Je banktransacties en trefwoorden blijven bewaard.')){ hist = {}; store.set('hist', hist); render(); }
+  }
+  else if (el.id==='vmAdd') vmNewRow();
+  else if (el.dataset.sethuis){ vm.settings.huis = +el.dataset.sethuis; saveVm(); renderVm(); toast('Waarde huis aangepast'); }
+  else if (el.dataset.vmdel !== undefined){
+    const r = vm.rows[+el.dataset.vmdel];
+    if (confirm('De rij van '+r.d.split('-').reverse().join('-')+' verwijderen?')){ vm.rows.splice(+el.dataset.vmdel,1); saveVm(); renderVm(); }
+  }
+  else if (el.id==='vmCopy'){ const ok = await copyText(vmTable().map(r=>r.join('\t')).join('\n')); toast(ok?'Gekopieerd, plak in Excel met Ctrl+V':'Kopiëren lukte niet'); }
+  else if (el.id==='vmPasteBtn'){ $('#vmPaste').classList.remove('hidden'); $('#vmPasteText').focus(); }
+  else if (el.id==='vmPasteCancel'){ $('#vmPaste').classList.add('hidden'); }
+  else if (el.id==='vmImport'){
+    const txt = $('#vmPasteText').value;
+    if (!txt.trim()){ $('#vmResult').innerHTML = '<span class="neg">Er is nog niets geplakt.</span>'; return; }
+    const {n, bad} = vmImport(txt);
+    let msg = n ? `✓ ${n} maanden geïmporteerd.` : '<span class="neg">Er is niets geïmporteerd.</span>';
+    if (bad.length) msg += `<br><span class="neg">${bad.length} regel(s) overgeslagen omdat de datum niet werd herkend, bijvoorbeeld:</span><br><code>${esc(bad[0].slice(0,160))}</code>`
+      + (txt.includes('\t') ? '' : '<br><span class="neg">Er zitten geen tabs in de geplakte tekst. Kopieer rechtstreeks uit Excel met Ctrl+C.</span>');
+    $('#vmResult').innerHTML = msg;
+    if (n && !bad.length){ $('#vmPasteText').value=''; toast(n+' maanden geïmporteerd'); }
+  }
+  else if (el.id==='exp2') $('#exp').click();
+  else if (el.id==='imp2') $('#impFile').click();
+  else if (el.dataset.copyraw !== undefined){ const ok = await copyText((files[+el.dataset.copyraw].raw||[]).map(mask).join('\n')); toast(ok?'Gekopieerd':'Kopiëren lukte niet'); }
+  else if (el.dataset.rm !== undefined){ droppedSrc.add(files[+el.dataset.rm].id); files.splice(+el.dataset.rm,1); rebuild(); }
+  else if (el.dataset.ids !== undefined){ filt = {q:'', month:el.dataset.m, cat:el.dataset.ids}; renderTx(); showTab('tx'); }
+  else if (el.dataset.add !== undefined){
+    const i = el.dataset.add, k = $('#uk'+i).value.trim().toLowerCase(), c = $('#uc'+i).value;
+    if (!k || !c){ toast('Kies eerst een categorie'); return; }
+    rules[c] = (rules[c] ? rules[c]+', ' : '') + k; saveRules();
+    $('#rules').dataset.done = ''; recat(); toast('"'+k+'" → '+label(c));
+  }
+  else if (el.id==='copy'){ const ok = await copyText(tableRows(',').map(r=>r.join('\t')).join('\n')); toast(ok?'Gekopieerd, plak in Excel met Ctrl+V':'Kopiëren lukte niet'); }
+  else if (el.id==='csv'){ download('huishoudboekje.csv', '﻿'+tableRows(',').map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\r\n'), 'text/csv'); }
+  else if (el.id==='exp'){ download('huishoudboekje-backup-'+new Date().toISOString().slice(0,10)+'.json', JSON.stringify({rules, overrides, vermogen: vm, historie: hist, transacties: packTx(storedTx)}), 'application/json'); }
+  else if (el.id==='wipeTx'){
+    if (!confirm('Alle opgeslagen banktransacties wissen (ook online)? Je trefwoorden, Excel-historie en vermogen blijven bewaard.')) return;
+    storedTx = []; files.forEach(f=>droppedSrc.add(f.id)); files = []; rebuild(); toast('Transacties gewist');
+  }
+  else if (el.id==='imp'){ $('#impFile').click(); }
+  else if (el.id==='resetRules'){
+    if (!confirm('Alle trefwoorden terugzetten naar de standaard? Handmatige keuzes per transactie blijven bewaard.')) return;
+    rules = Object.assign({}, D); saveRules(); $('#rules').dataset.done=''; recat();
+  }
+});
+$('#impFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const j = JSON.parse(await f.text()); if (j.rules) rules = Object.assign({}, D, j.rules); if (j.overrides) overrides = j.overrides;
+        if (j.historie && typeof j.historie==='object'){ hist = j.historie; store.set('hist', hist); }
+        if (j.vermogen && Array.isArray(j.vermogen.rows)){ vm = j.vermogen; vm.settings = vm.settings || {}; saveVm(); renderVm(); }
+        let nTx = 0;
+        if (Array.isArray(j.transacties)){ const have = new Set(storedTx.map(t=>t.key)); const extra = unpackTx(j.transacties).filter(t=>!have.has(t.key)); nTx = extra.length; storedTx = storedTx.concat(extra); }
+        saveRules(); saveOverrides(); $('#rules').dataset.done=''; rebuild(); toast('Geïmporteerd'+(nTx?' (+'+nTx+' transacties)':'')); }
+  catch(err){ toast('Dit bestand kon niet worden gelezen'); }
+  e.target.value = '';
+};
+
+// =====================================================================
+// Online opslag, versleuteld met jullie wachtwoord
+// =====================================================================
+// Plak hier de config van je Firebase-project:
+// Firebase-console → Projectinstellingen (tandwiel) → "Je apps" → Web-app → SDK-configuratie → "Config"
+const firebaseConfig = {
+  apiKey: "AIzaSyCA1FHBN21y4AYBMzw1K2Ya3MQE-7ZUlt0",
+  authDomain: "huishoudboekje-59642.firebaseapp.com",
+  projectId: "huishoudboekje-59642",
+  storageBucket: "huishoudboekje-59642.firebasestorage.app",
+  messagingSenderId: "462082053986",
+  appId: "1:462082053986:web:1e6959ebbf0957a7003e3b"
+};
+
+// ---------- Versleuteling (AES-256-GCM, sleutel afgeleid van het wachtwoord met PBKDF2) ----------
+// Het wachtwoord en de sleutel verlaten dit apparaat nooit. Online staat alleen versleutelde tekst.
+const te = new TextEncoder(), td = new TextDecoder();
+const toB64 = u8 => { let s=''; for (let i=0;i<u8.length;i+=0x8000) s += String.fromCharCode.apply(null, u8.subarray(i,i+0x8000)); return btoa(s); };
+const fromB64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+const KDF_ITER = 600000;
+let KEY = null;
+async function deriveKey(pw, salt){
+  const base = await crypto.subtle.importKey('raw', te.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt:fromB64(salt), iterations:KDF_ITER, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
+}
+async function zip(u8){ if (!window.CompressionStream) return null; return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()); }
+async function unzip(u8){ return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()); }
+async function seal(obj, key=KEY){
+  let bytes = te.encode(JSON.stringify(obj)); const z = await zip(bytes); if (z) bytes = z;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, bytes));
+  return {v:1, z: z?1:0, iv: toB64(iv), ct: toB64(ct)};
+}
+async function unseal(box, key=KEY){
+  let bytes = new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM', iv: fromB64(box.iv)}, key, fromB64(box.ct)));
+  if (box.z) bytes = await unzip(bytes);
+  return JSON.parse(td.decode(bytes));
+}
+
+// Sleutel onthouden op dit apparaat (IndexedDB). Hij is niet uit te lezen, alleen te gebruiken door deze app.
+const KeyStore = {
+  open(){ return new Promise((res,rej)=>{ const r = indexedDB.open('huishoudboekje',1); r.onupgradeneeded = ()=>r.result.createObjectStore('keys'); r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error); }); },
+  async get(id){ try{ const d = await this.open(); return await new Promise(res=>{ const q = d.transaction('keys').objectStore('keys').get(id); q.onsuccess = ()=>res(q.result||null); q.onerror = ()=>res(null); }); }catch(e){ return null; } },
+  async set(id,v){ try{ const d = await this.open(); await new Promise(res=>{ const t = d.transaction('keys','readwrite'); t.objectStore('keys').put(v,id); t.oncomplete = res; t.onerror = res; }); }catch(e){} },
+  async del(id){ try{ const d = await this.open(); await new Promise(res=>{ const t = d.transaction('keys','readwrite'); t.objectStore('keys').delete(id); t.oncomplete = res; t.onerror = res; }); }catch(e){} }
+};
+
+// ---------- Firebase (Google-login + Firestore) ----------
+// Gegevens staan in boekjes/{uid} en boekjes/{uid}/tx/{jaar}. De beveiligingsregels laten alleen jullie account erbij.
+const Backend = {
+  init(){ firebase.initializeApp(firebaseConfig); this.auth = firebase.auth(); this.db = firebase.firestore(); },
+  onUser(cb){ this.auth.onAuthStateChanged(cb); },
+  login(){
+    const p = new firebase.auth.GoogleAuthProvider();
+    return this.auth.signInWithPopup(p).catch(e=>{
+      if (e.code==='auth/popup-blocked' || e.code==='auth/operation-not-supported-in-this-environment') return this.auth.signInWithRedirect(p);
+      throw e;
+    });
+  },
+  logout(){ return this.auth.signOut(); },
+  ref(uid){ return this.db.collection('boekjes').doc(uid); },
+  async getMain(uid){ const s = await this.ref(uid).get(); return s.exists ? s.data() : null; },
+  setMain(uid, d){ return this.ref(uid).set(d); },
+  async getTx(uid){ const q = await this.ref(uid).collection('tx').get(); return q.docs.map(d=>({id:d.id, data:d.data().data})); },
+  setTx(uid, year, d){ return this.ref(uid).collection('tx').doc(year).set(d); },
+  delTx(uid, year){ return this.ref(uid).collection('tx').doc(year).delete(); },
+  watch(uid, cb){ return this.ref(uid).onSnapshot(s=>{ if (!s.metadata.hasPendingWrites && s.exists) cb(s.data()); }, e=>console.warn(e)); }
+};
+
+// ---------- Automatisch opslaan ----------
+const SESSION = Math.random().toString(36).slice(2);
+const mainState = () => ({rules, overrides, vermogen: vm, hist});
+const packTx = list => list.map(t=>[t.date, r2(t.amt), t.name, t.desc, t.text, t.key]);
+const unpackTx = arr => arr.map(a=>({date:a[0], month:a[0].slice(0,7), amt:a[1], name:a[2], desc:a[3], text:a[4], key:a[5]}));
+function setStatus(s){
+  const el = $('#syncStatus'); if (!el) return;
+  el.textContent = s==='ok' ? '✓ Opgeslagen' : s==='wait' ? 'Opslaan…' : s==='err' ? '⚠ Niet opgeslagen, nieuwe poging…' : '';
+  el.className = 'small ' + (s==='err' ? 'neg' : 'muted');
+}
+const Cloud = {
+  uid:null, salt:null, check:null, ready:false, dirtyMain:false, dirtyTx:false, saving:false, timer:null, savedTx:{}, lastUpdated:0, unwatch:null,
+  dirty(what){
+    if (!this.ready) return;
+    if (what==='tx') this.dirtyTx = true; else this.dirtyMain = true;
+    setStatus('wait'); clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 1200);
+  },
+  async save(){
+    if (!this.ready) return;
+    if (this.saving){ clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 800); return; }
+    this.saving = true;
+    try{
+      if (this.dirtyTx){ this.dirtyTx = false; await this.saveTx(); this.dirtyMain = true; }
+      if (this.dirtyMain){
+        this.dirtyMain = false;
+        const now = Date.now();
+        await Backend.setMain(this.uid, {salt:this.salt, check:this.check, data: await seal(mainState()), updated: now, by: SESSION});
+        this.lastUpdated = now;
+      }
+      setStatus(this.dirtyMain || this.dirtyTx ? 'wait' : 'ok');
+    }catch(e){
+      console.error(e); this.dirtyMain = true; this.dirtyTx = true; setStatus('err');
+      clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 10000);
+    }
+    this.saving = false;
+  },
+  // Per jaar een apart document, alleen jaren die veranderd zijn worden opnieuw opgeslagen
+  async saveTx(){
+    const byYear = {};
+    storedTx.forEach(t=>{ const y = t.date.slice(0,4); (byYear[y] = byYear[y] || []).push(t); });
+    for (const y in byYear){
+      const packed = packTx(byYear[y]), j = JSON.stringify(packed);
+      if (this.savedTx[y] === j) continue;
+      await Backend.setTx(this.uid, y, {data: await seal(packed), updated: Date.now()});
+      this.savedTx[y] = j;
+    }
+    for (const y of Object.keys(this.savedTx)) if (!byYear[y]){ await Backend.delTx(this.uid, y); delete this.savedTx[y]; }
+  }
+};
+window.addEventListener('beforeunload', e=>{ if (Cloud.ready && (Cloud.dirtyMain || Cloud.dirtyTx || Cloud.saving)){ e.preventDefault(); e.returnValue = ''; } });
+
+async function loadAll(main){
+  const d = main && main.data ? await unseal(main.data) : {};
+  rules = Object.assign({}, D, d.rules||{});
+  overrides = d.overrides || {};
+  vm = d.vermogen || {settings:{}, rows:[]}; vm.settings = vm.settings || {}; vm.rows = vm.rows || [];
+  hist = d.hist || {};
+  const docs = await Backend.getTx(Cloud.uid);
+  const all = []; Cloud.savedTx = {};
+  for (const doc of docs){ const arr = await unseal(doc.data); Cloud.savedTx[doc.id] = JSON.stringify(arr); all.push(...unpackTx(arr)); }
+  storedTx = all; files = []; droppedSrc.clear();
+  Cloud.lastUpdated = (main && main.updated) || 0;
+  $('#rules').dataset.done = '';
+  rebuild(); renderVm();
+}
+function resetApp(){
+  if (Cloud.unwatch){ Cloud.unwatch(); Cloud.unwatch = null; }
+  clearTimeout(Cloud.timer);
+  Object.assign(Cloud, {ready:false, dirtyMain:false, dirtyTx:false, savedTx:{}, lastUpdated:0});
+  KEY = null; rules = Object.assign({}, D); overrides = {}; vm = {settings:{}, rows:[]}; hist = {};
+  storedTx = []; tx = []; files = []; droppedSrc.clear();
+  $('#rules').dataset.done = ''; render(); renderVm(); setStatus('');
+}
+async function startApp(){
+  showGate('loading', 'Gegevens ontsleutelen…');
+  const main = await Backend.getMain(Cloud.uid);
+  await loadAll(main);
+  Cloud.ready = true; setStatus('ok');
+  if (!Cloud.unwatch) Cloud.unwatch = Backend.watch(Cloud.uid, onRemote);
+  hideGate();
+}
+// Wijziging vanaf een ander apparaat (bijv. je telefoon)
+async function onRemote(d){
+  if (!Cloud.ready || d.by===SESSION || (d.updated||0) <= Cloud.lastUpdated) return;
+  if (d.salt !== Cloud.salt){ await KeyStore.del(Cloud.uid); resetKeepUser(); showGate('unlock', 'Het wachtwoord is op een ander apparaat gewijzigd. Vul het nieuwe wachtwoord in.'); return; }
+  if (Cloud.dirtyMain || Cloud.dirtyTx || Cloud.saving) return;
+  try{ Cloud.ready = false; await loadAll(d); Cloud.ready = true; toast('Bijgewerkt vanaf een ander apparaat'); }
+  catch(e){ console.error(e); Cloud.ready = true; }
+}
+function resetKeepUser(){ const uid = Cloud.uid, salt = Cloud.salt, check = Cloud.check; resetApp(); Object.assign(Cloud, {uid, salt, check}); }
+
+// ---------- Inlogschermen ----------
+function showGate(kind, msg=''){
+  const g = $('#gate'), b = $('#gateBody'); g.classList.remove('hidden'); document.body.classList.add('locked');
+  const remember = `<label class="chk"><input type="checkbox" id="gRemember" checked> Onthoud op dit apparaat (dan hoef je het wachtwoord hier niet steeds in te vullen)</label>`;
+  const note = msg ? `<p class="gmsg">${esc(msg)}</p>` : '';
+  const html = {
+    config: `<p>Deze app is nog niet gekoppeld aan Firebase. Plak de Firebase-config bovenaan het onderdeel "Online opslag" in <code>index.html</code>. Hoe dat moet, staat in de README.</p>`,
+    error: `${note}<button id="gReload">Opnieuw proberen</button>`,
+    loading: `<p class="muted">${esc(msg || 'Laden…')}</p>`,
+    login: `${note}<p>Log in met jullie Google-account. Je gegevens worden versleuteld opgeslagen met een wachtwoord dat alleen jullie kennen.</p><button class="primary big" id="gLogin">Inloggen met Google</button><p class="small muted" id="gStatus"></p>`,
+    setup: `${note}<p><b>Kies een wachtwoord om je gegevens te versleutelen.</b> Online is alles onleesbaar zonder dit wachtwoord, ook voor Google.</p>
+      <label>Wachtwoord (minstens 10 tekens)<input type="password" id="gPw1" autocomplete="new-password"></label>
+      <label>Herhaal wachtwoord<input type="password" id="gPw2" autocomplete="new-password"></label>
+      <label class="chk"><input type="checkbox" id="gUnderstand"> Ik begrijp dat mijn gegevens <b>niet terug te halen zijn</b> als we dit wachtwoord vergeten. We schrijven het op een veilige plek op.</label>
+      ${remember}<button class="primary big" id="gSetup">Wachtwoord instellen</button><p class="small" id="gStatus"></p>
+      <p class="small muted"><button class="link" id="gLogout">Ander Google-account gebruiken</button></p>`,
+    unlock: `${note}<p>Vul jullie wachtwoord in om je gegevens te ontsleutelen.</p>
+      <label>Wachtwoord<input type="password" id="gPw" autocomplete="current-password"></label>
+      ${remember}<button class="primary big" id="gUnlock">Openen</button><p class="small" id="gStatus"></p>
+      <p class="small muted"><button class="link" id="gLogout">Uitloggen</button></p>`,
+    change: `<p><b>Wachtwoord wijzigen.</b> Alle gegevens worden opnieuw versleuteld. Op je andere apparaten moet je daarna het nieuwe wachtwoord invullen.</p>
+      <label>Huidig wachtwoord<input type="password" id="gOld" autocomplete="current-password"></label>
+      <label>Nieuw wachtwoord (minstens 10 tekens)<input type="password" id="gPw1" autocomplete="new-password"></label>
+      <label>Herhaal nieuw wachtwoord<input type="password" id="gPw2" autocomplete="new-password"></label>
+      ${remember}<div class="row"><button class="primary" id="gChange">Wijzigen</button><button id="gCancel">Annuleren</button></div><p class="small" id="gStatus"></p>`
+  }[kind];
+  b.innerHTML = html;
+  const first = b.querySelector('input[type=password]'); if (first) setTimeout(()=>first.focus(), 50);
+}
+function hideGate(){ $('#gate').classList.add('hidden'); document.body.classList.remove('locked'); }
+const gStatus = (t, bad) => { const el = $('#gStatus'); if (el){ el.textContent = t; el.className = 'small ' + (bad ? 'neg' : 'muted'); } };
+const busy = (id, on) => { const el = $('#'+id); if (el) el.disabled = on; };
+
+async function doSetup(){
+  const p1 = $('#gPw1').value, p2 = $('#gPw2').value;
+  if (p1.length < 10) return gStatus('Kies een wachtwoord van minstens 10 tekens.', true);
+  if (p1 !== p2) return gStatus('De wachtwoorden zijn niet gelijk.', true);
+  if (!$('#gUnderstand').checked) return gStatus('Vink aan dat je begrijpt dat het wachtwoord niet terug te halen is.', true);
+  busy('gSetup', true); gStatus('Bezig met versleutelen…');
+  try{
+    Cloud.salt = toB64(crypto.getRandomValues(new Uint8Array(16)));
+    KEY = await deriveKey(p1, Cloud.salt);
+    Cloud.check = await seal({ok:1});
+    if ($('#gRemember').checked) await KeyStore.set(Cloud.uid, {key:KEY, salt:Cloud.salt});
+    const now = Date.now();
+    await Backend.setMain(Cloud.uid, {salt:Cloud.salt, check:Cloud.check, data: await seal(mainState()), updated: now, by: SESSION});
+    await startApp();
+  }catch(e){ console.error(e); busy('gSetup', false); gStatus(fbError(e), true); }
+}
+async function doUnlock(){
+  const pw = $('#gPw').value; if (!pw) return gStatus('Vul het wachtwoord in.', true);
+  busy('gUnlock', true); gStatus('Bezig met ontsleutelen…');
+  try{
+    const main = await Backend.getMain(Cloud.uid);
+    Cloud.salt = main.salt; Cloud.check = main.check;
+    const key = await deriveKey(pw, main.salt);
+    try{ await unseal(main.check, key); }catch(e){ busy('gUnlock', false); return gStatus('Dit wachtwoord klopt niet.', true); }
+    KEY = key;
+    if ($('#gRemember').checked) await KeyStore.set(Cloud.uid, {key, salt:main.salt}); else await KeyStore.del(Cloud.uid);
+    await startApp();
+  }catch(e){ console.error(e); busy('gUnlock', false); gStatus(fbError(e), true); }
+}
+async function doChange(){
+  const old = $('#gOld').value, p1 = $('#gPw1').value, p2 = $('#gPw2').value;
+  if (p1.length < 10) return gStatus('Kies een nieuw wachtwoord van minstens 10 tekens.', true);
+  if (p1 !== p2) return gStatus('De nieuwe wachtwoorden zijn niet gelijk.', true);
+  busy('gChange', true); gStatus('Controleren…');
+  try{ await unseal(Cloud.check, await deriveKey(old, Cloud.salt)); }
+  catch(e){ busy('gChange', false); return gStatus('Het huidige wachtwoord klopt niet.', true); }
+  gStatus('Alles opnieuw versleutelen…');
+  try{
+    while (Cloud.saving) await new Promise(r=>setTimeout(r,200));
+    Cloud.salt = toB64(crypto.getRandomValues(new Uint8Array(16)));
+    KEY = await deriveKey(p1, Cloud.salt);
+    Cloud.check = await seal({ok:1});
+    Cloud.savedTx = Object.fromEntries(Object.keys(Cloud.savedTx).map(y=>[y,''])); // alles opnieuw opslaan
+    Cloud.dirtyTx = true; Cloud.dirtyMain = true;
+    await Cloud.save();
+    if (Cloud.dirtyMain || Cloud.dirtyTx) throw new Error('save');
+    if ($('#gRemember').checked) await KeyStore.set(Cloud.uid, {key:KEY, salt:Cloud.salt}); else await KeyStore.del(Cloud.uid);
+    hideGate(); toast('Wachtwoord gewijzigd');
+  }catch(e){ console.error(e); busy('gChange', false); gStatus('Opslaan mislukt. Controleer je internetverbinding en probeer het opnieuw.', true); }
+}
+function fbError(e){
+  if (e && e.code==='permission-denied') return 'Toegang geweigerd. Controleer de beveiligingsregels in Firebase (zie README).';
+  if (e && (e.code==='unavailable' || /offline|network/i.test(e.message||''))) return 'Geen verbinding. Controleer je internet.';
+  return 'Er ging iets mis: ' + ((e && (e.code || e.message)) || e);
+}
+
+document.addEventListener('click', async e=>{
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id==='gLogin'){ gStatus('Bezig met inloggen…'); try{ await Backend.login(); }catch(err){ gStatus(err.code==='auth/popup-closed-by-user' ? '' : 'Inloggen mislukt: '+(err.code||err.message), true); } }
+  else if (b.id==='gSetup') doSetup();
+  else if (b.id==='gUnlock') doUnlock();
+  else if (b.id==='gChange') doChange();
+  else if (b.id==='gCancel') hideGate();
+  else if (b.id==='gReload') location.reload();
+  else if (b.id==='gLogout' || b.id==='aLogout'){ if (b.id==='aLogout' && !confirm('Uitloggen? Op dit apparaat moet je daarna opnieuw inloggen en het wachtwoord invullen.')) return; await KeyStore.del(Cloud.uid); await Backend.logout(); }
+  else if (b.id==='aLock'){ await KeyStore.del(Cloud.uid); resetKeepUser(); showGate('unlock', 'Vergrendeld. Het wachtwoord is van dit apparaat verwijderd.'); }
+  else if (b.id==='aChange'){ $('#acct').open = false; showGate('change'); }
+  else if (b.id==='aBackup'){ $('#acct').open = false; $('#exp').click(); }
+});
+document.addEventListener('keydown', e=>{
+  if (e.key!=='Enter' || !e.target.closest('#gate')) return;
+  const btn = $('#gate').querySelector('button.primary'); if (btn && !btn.disabled) btn.click();
+});
+
+async function boot(){
+  render(); renderVm();
+  if (!firebaseConfig.apiKey) return showGate('config');
+  if (!window.firebase) return showGate('error', 'Firebase kon niet worden geladen. Controleer je internetverbinding.');
+  if (!(window.crypto && crypto.subtle)) return showGate('error', 'Deze browser kan niet versleutelen. Open de app via https.');
+  Backend.init(); showGate('loading');
+  Backend.onUser(async user=>{
+    if (!user){ resetApp(); Cloud.uid = null; showGate('login'); return; }
+    Cloud.uid = user.uid; $('#acctMail').textContent = user.email || '';
+    try{
+      showGate('loading');
+      const main = await Backend.getMain(user.uid);
+      if (!main || !main.check) return showGate('setup');
+      Cloud.salt = main.salt; Cloud.check = main.check;
+      const saved = await KeyStore.get(user.uid);
+      if (saved && saved.salt===main.salt){
+        try{ await unseal(main.check, saved.key); KEY = saved.key; return await startApp(); }catch(e){ /* sleutel verouderd */ }
+      }
+      showGate('unlock');
+    }catch(e){ console.error(e); showGate('error', fbError(e)); }
+  });
+}
+boot();
+</script>
+</body>
+</html>

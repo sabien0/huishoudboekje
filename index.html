@@ -31,6 +31,7 @@ td.pickcell{white-space:normal;min-width:260px}
 .chip.sugg{font-weight:600;padding:5px 12px;background:color-mix(in srgb, var(--c) 28%, var(--card))}
 .chip.cur{text-align:left}
 input.kw{width:170px}
+input.kw.bad{border-color:var(--warn);outline:1px solid var(--warn)}
 .undobar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;display:flex;gap:12px;align-items:center;background:var(--ink);color:var(--bg);padding:8px 10px 8px 14px;border-radius:9px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
 .undobar button{background:transparent;color:var(--bg);border-color:var(--bg);white-space:nowrap}
 .menuhead{margin-top:6px;border-top:1px solid var(--line);padding-top:8px}
@@ -507,7 +508,7 @@ function compileRules(){
 }
 function categorize(t){
   if (overrides[t.key] && CATMAP[overrides[t.key]]) return {id:overrides[t.key], by:'handmatig'};
-  for (const r of compiled) if (r.re.test(t.text)) return {id:r.id, by:r.k};
+  for (const r of compiled) if (kwMatches(r.re, t)) return {id:r.id, by:r.k};
   return {id:'', by:''};
 }
 const bucket = t => t.cat || (t.amt>=0 ? '?in' : '?out');
@@ -864,7 +865,15 @@ function catOptions(selected, withAuto){
   });
   return o + '</optgroup>';
 }
-const normName = s => String(s||'').toLowerCase().replace(/\S*\d\S*/g,' ').replace(/[^a-z&.\- ]/g,' ').replace(/\s+/g,' ').trim();
+// Opgeschoonde tekst: kleine letters, zonder accenten (café → cafe), zonder woorden met cijfers en zonder tekens als * en '.
+// "SumUp *Bakker 1234 Utrecht" → "sumup bakker utrecht"
+// Woorden die vooral uit cijfers bestaan (pasnummers, IBAN's, kenmerken) vallen weg; uit andere woorden gaan alleen de cijfers eruit.
+const normName = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .split(/\s+/).map(w=>{ const d = (w.match(/\d/g)||[]).length, l = (w.match(/[a-z]/g)||[]).length; return d >= l ? '' : w.replace(/\d+/g,' '); }).join(' ')
+  .replace(/[^a-z&.\- ]/g,' ').replace(/(^|\s)[.\-]+|[.\-]+(?=\s|$)/g,' ').replace(/\s+/g,' ').trim();
+// Trefwoorden zoeken in de letterlijke tekst én in de opgeschoonde tekst
+const normText = t => t.ntext || (t.ntext = normName(t.text));
+const kwMatches = (re, t) => re.test(t.text) || re.test(normText(t));
 
 // ---------- Voorstellen: welke categorie past waarschijnlijk? ----------
 // Losse woorden die vaak in een naam of omschrijving staan. Dit zijn alleen voorstellen; jij kiest.
@@ -899,7 +908,7 @@ function learnedMap(){
 }
 function suggest(t, k, learned){
   if (learned[k]) return {id:learned[k], why:'eerder zo gekozen'};
-  for (const h of hintRules) if (h.re.test(t.text)) return {id:h.id, why:'herkend aan "'+h.k+'"'};
+  for (const h of hintRules) if (kwMatches(h.re, t)) return {id:h.id, why:'herkend aan "'+h.k+'"'};
   return null;
 }
 
@@ -941,12 +950,20 @@ let lastUndo = null;
 function showUndo(text, undo){
   lastUndo = undo; const b = $('#undoBar');
   b.querySelector('span').textContent = text; b.classList.remove('hidden');
+  $('#undoBtn').classList.toggle('hidden', !undo);
   clearTimeout(b._h); b._h = setTimeout(()=>b.classList.add('hidden'), 9000);
 }
 function assignPick(ctx, c){
   if (ctx.startsWith('u:')){
-    const i = ctx.slice(2), kw = ($('#uk'+i).value || '').trim().toLowerCase();
+    const i = ctx.slice(2), kw = ($('#uk'+i).value || '').trim().toLowerCase().replace(/\s+/g,' ');
     if (!kw){ toast('Vul eerst een trefwoord in'); return; }
+    // Controle vooraf: past het trefwoord wel op deze transactie?
+    const g = lastUnList[+i], re = new RegExp('(^|[^a-z])'+reEsc(kw)+'(?![a-z])');
+    if (g && !kwMatches(re, g.ex)){
+      const inp = $('#uk'+i); inp.classList.add('bad'); inp.focus();
+      showUndo(`"${kw}" komt niet voor in "${g.ex.name}". Maak het trefwoord korter, bijv. één woord uit de naam.`, null);
+      return;
+    }
     rules[c] = (rules[c] ? rules[c]+', ' : '') + kw; saveRules();
     $('#rules').dataset.done = ''; pickOpen = {}; recat();
     showUndo(`"${kw}" → ${label(c)}. Voortaan automatisch.`, ()=>{ rules[c] = String(rules[c]||'').split(',').map(s=>s.trim()).filter(s=>s && s!==kw).join(', '); saveRules(); $('#rules').dataset.done=''; recat(); });
@@ -964,7 +981,8 @@ function renderUnmatched(){
   for (const k in pickOpen) if (k.startsWith('u:')) delete pickOpen[k];
   const groups = {}, learned = learnedMap();
   tx.filter(t=>!t.cat).forEach(t=>{
-    const k = normName(t.name) || normName(t.desc).slice(0,30) || '(onbekend)';
+    // Geen naam? Dan de eerste woorden van de omschrijving (heel, niet halverwege een woord afgeknipt)
+    const k = normName(t.name) || normName(t.desc).split(' ').filter(w=>w.length>2).reduce((a,w)=> (a+' '+w).trim().length<=30 ? (a+' '+w).trim() : a, '') || '(onbekend)';
     const g = groups[k] = groups[k] || {k, n:0, sum:0, ex:t, sug:null};
     g.n++; g.sum += t.amt;
     if (!g.sug) g.sug = suggest(t, k, learned);

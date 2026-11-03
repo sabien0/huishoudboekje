@@ -23,6 +23,11 @@ body.locked main{visibility:hidden}
 .acct summary::-webkit-details-marker{display:none}
 .acctmenu{position:absolute;right:0;top:36px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:230px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
 .acctmenu button{text-align:left}
+.menuhead{margin-top:6px;border-top:1px solid var(--line);padding-top:8px}
+.acctmenu .menuhead:first-of-type{margin-top:4px}
+.acctmenu button.danger{color:var(--warn);border-color:var(--warn)}
+.due{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--soft);border-left:3px solid var(--accent);border-radius:7px;padding:10px 12px;margin-bottom:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-left:5px;vertical-align:1px}
 @media (max-width:600px){ main{padding-top:14px} h1{font-size:19px} }
 :root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1b;--muted:#6b6a66;--line:#e4e2dc;--accent:#2f6f5e;--warn:#b5562f;--soft:#efeee9}
 @media (prefers-color-scheme: dark){:root{--bg:#171716;--card:#21211f;--ink:#ecebe7;--muted:#a3a19b;--line:#34332f;--accent:#6cc0a6;--warn:#e69a72;--soft:#2a2a27}}
@@ -109,10 +114,15 @@ textarea{font:12px ui-monospace,Consolas,monospace;width:100%;min-height:120px;c
     <details class="acct" id="acct"><summary title="Account">☰</summary>
       <div class="acctmenu">
         <div class="small muted" id="acctMail"></div>
+        <div class="small muted menuhead">Importeren uit Excel</div>
+        <button data-histopen="1">Maandcijfers (uitgaven per categorie)</button>
+        <button id="vmPasteBtn">Vermogen</button>
+        <div class="small muted menuhead">Account</div>
         <button id="aBackup">Back-up downloaden</button>
         <button id="aChange">Wachtwoord wijzigen</button>
         <button id="aLock">Vergrendelen op dit apparaat</button>
         <button id="aLogout">Uitloggen</button>
+        <button id="aWipe" class="danger">Alle gegevens wissen…</button>
       </div>
     </details>
   </div>
@@ -139,20 +149,20 @@ textarea{font:12px ui-monospace,Consolas,monospace;width:100%;min-height:120px;c
       <button data-tab="un">Niet ingedeeld <span id="unCount"></span></button>
       <button data-tab="tx">Transacties</button>
       <button data-tab="rules">Trefwoorden</button>
-      <button data-tab="vm">Vermogen</button>
+      <button data-tab="vm">Vermogen<span id="vmBadge"></span></button>
     </nav>
 
     <section id="tab-sum">
-      <div class="card nosummsg"><span class="muted">Voeg een bankbestand toe, of plak je bestaande cijfers uit Excel. Het tabblad Vermogen werkt ook zonder.<br>Heb je de offline versie gebruikt? Klik daar op Trefwoorden → <b>Instellingen exporteren</b> en zet dat bestand hier terug via Trefwoorden → <b>Importeren</b>.</span>
-        <div style="margin-top:8px"><button class="primary" data-histopen="1">Historie uit Excel plakken</button></div></div>
+      <div class="card nosummsg"><span class="muted">Nog geen transacties. Download je transacties als CSV bij je bank en klik op <b>+ Bankbestand</b>, of zet het bestand ergens op de pagina neer. Het tabblad Vermogen werkt ook zonder.</span>
+        <div style="margin-top:8px"><button class="primary" onclick="document.getElementById('file').click()">+ Bankbestand toevoegen</button></div></div>
       <div class="card hidden" id="histPanel">
-        <h2>Historie uit Excel</h2>
-        <p class="small muted" style="margin-top:0">Selecteer in je Excel het blok met de <b>kopregel met maanden</b> en alle categorierijen (de kolommen met groep en subcategorie plus de maandkolommen). Kopieer het en plak het hieronder. Rijen als "Uitgaven totaal" worden overgeslagen. Voor de maanden die je plakt, gebruikt het overzicht jouw Excel-cijfers in plaats van de banktransacties. Lege maanden worden overgeslagen.</p>
+        <div class="row"><h2 style="margin:0">Maandcijfers uit Excel importeren</h2><span class="spacer"></span><button id="histClose">Sluiten</button></div>
+        <p class="small muted">Selecteer in je Excel het blok met de <b>kopregel met maanden</b> en alle categorierijen (de kolommen met groep en subcategorie plus de maandkolommen). Kopieer het en plak het hieronder. Rijen als "Uitgaven totaal" worden overgeslagen. Voor de maanden die je plakt, gebruikt het overzicht jouw Excel-cijfers in plaats van de banktransacties. Lege maanden worden overgeslagen.</p>
         <textarea id="histText" placeholder="	Categorie	jan-25	feb-25	mrt-25 …"></textarea>
         <div class="row" style="margin-top:6px">
           <label class="small muted">Jaar (alleen nodig als de maanden geen jaartal hebben) <input type="text" id="histYear" inputmode="numeric" style="width:70px"></label>
           <span class="spacer"></span>
-          <button class="primary" id="histImport">Importeren</button><button id="histClose">Sluiten</button>
+          <button class="primary" id="histImport">Importeren</button>
         </div>
         <div id="histResult" class="small" style="margin-top:8px"></div>
       </div>
@@ -169,7 +179,6 @@ textarea{font:12px ui-monospace,Consolas,monospace;width:100%;min-height:120px;c
       <div class="card needsum">
         <div class="row" style="margin-bottom:10px">
           <h2 style="margin:0">Alle maanden</h2><span class="spacer"></span>
-          <button data-histopen="1">Historie uit Excel</button>
           <button class="primary" id="copy">Kopieer voor Excel</button>
           <button id="csv">Download CSV</button>
         </div>
@@ -220,15 +229,16 @@ textarea{font:12px ui-monospace,Consolas,monospace;width:100%;min-height:120px;c
           <h2 style="margin:0">Vermogen op de eerste van de maand</h2><span class="spacer"></span>
           <button class="primary" id="vmAdd">+ Nieuwe maand</button>
           <button id="vmCopy">Kopieer voor Excel</button>
-          <button id="vmPasteBtn">Plak uit Excel</button>
         </div>
-        <p class="muted small" style="margin-top:0">Vul elke eerste van de maand je saldi in en het bedrag dat nog <b>openstaat</b> bij de Allianz-hypotheek (dus niet wat je die maand betaalde). Het openstaande bedrag van de <b>familiehypotheek</b> wordt berekend: openstaand vorige maand − (wat je die maand betaalde − de rente van die maand). <i>Schuin gedrukte bedragen</i> zijn berekend of standaardwaarden. Typ er een bedrag overheen om ze aan te passen, bijvoorbeeld de beginstand in de eerste rij of de rente uit je overzicht.</p>
+        <div id="vmDue" class="due hidden"></div>
         <div id="vmPaste" class="hidden" style="margin-bottom:12px">
-          <p class="small muted" style="margin:0 0 6px">Selecteer in Excel je tabel <b>inclusief de kopregel</b> (Eerste van de maand, ASN betaal, …), kopieer met Ctrl+C en plak hieronder. De kolommen worden op naam herkend. Bestaande maanden worden overschreven. "Hypotheek Familie" wordt als vaste stand overgenomen.</p>
+          <div class="row"><b>Vermogen uit Excel importeren</b><span class="spacer"></span><button id="vmPasteCancel">Sluiten</button></div>
+          <p class="small muted" style="margin:6px 0">Selecteer in Excel je tabel <b>inclusief de kopregel</b> (Eerste van de maand, ASN betaal, …), kopieer met Ctrl+C en plak hieronder. De kolommen worden op naam herkend. Bestaande maanden worden overschreven.</p>
           <textarea id="vmPasteText" placeholder="Eerste van de maand	ASN betaal	ASN spaar	…"></textarea>
           <div id="vmResult" class="small" style="margin-top:6px"></div>
-          <div class="row" style="margin-top:6px"><button class="primary" id="vmImport">Importeren</button><button id="vmPasteCancel">Annuleren</button></div>
+          <div class="row" style="margin-top:6px"><button class="primary" id="vmImport">Importeren</button></div>
         </div>
+        <p class="muted small" style="margin-top:0">Vul elke eerste van de maand je saldi in en het bedrag dat nog <b>openstaat</b> bij de Allianz-hypotheek (dus niet wat je die maand betaalde). Het openstaande bedrag van de <b>familiehypotheek</b> wordt berekend: openstaand vorige maand − (wat je die maand betaalde − de rente van die maand). <i>Schuin gedrukte bedragen</i> zijn berekend of standaardwaarden. Typ er een bedrag overheen om ze aan te passen, bijvoorbeeld de beginstand in de eerste rij of de rente uit je overzicht.</p>
         <div class="scroll"><table id="vm"></table></div>
       </div>
       <div id="vmChart" class="charts"></div>
@@ -541,6 +551,13 @@ function renderVm(){
   const S = vm.settings;
   document.querySelectorAll('[data-vms]').forEach(i=>{ if (document.activeElement!==i) i.value = fmtIn(S[i.dataset.vms]); });
   const rows = calcVm();
+  // Herinnering: staat de eerste van deze maand er al in?
+  const now = new Date(), curD = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+  const first = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('nl-NL',{day:'numeric', month:'long'});
+  const due = !vm.rows.some(r=>r.d===curD && ASSETS.some(([k])=>isNum(r[k])));
+  $('#vmDue').classList.toggle('hidden', !due);
+  $('#vmDue').innerHTML = due ? `<span>📅 Je vermogen van <b>${first}</b> is nog niet ingevuld.</span><button class="primary" data-vmcur="${curD}">Nu invullen</button>` : '';
+  $('#vmBadge').innerHTML = due ? '<span class="dot" title="Vermogen van deze maand nog invullen"></span>' : '';
   // Met welk huisbedrag rekent je Excel? Huis afbetaald (Excel) + beide openstaande hypotheken
   const bases = rows.filter(c=>isNum(c.r.xlAfb) && isNum(c.r.alli) && isNum(c.r.famOver)).map(c=>r2(c.r.xlAfb + Math.abs(c.r.alli) + Math.abs(c.r.famOver))).sort((a,b)=>a-b);
   const base = bases.length ? bases[Math.floor(bases.length/2)] : NaN;
@@ -564,7 +581,7 @@ function renderVm(){
       + `<td class="n">${isNum(c.pct)?(c.pct*100).toLocaleString('nl-NL',{maximumFractionDigits:1})+'%':'–'}</td>`
       + `<td><button data-vmdel="${i}" title="Rij verwijderen">×</button></td></tr>`;
   });
-  if (!rows.length) h += `<tr><td colspan="16" class="muted">Nog geen maanden. Klik op "+ Nieuwe maand" of plak je historie uit Excel.</td></tr>`;
+  if (!rows.length) h += `<tr><td colspan="16" class="muted">Nog geen maanden. Klik op "+ Nieuwe maand" om te beginnen.</td></tr>`;
   $('#vm').innerHTML = h + '</tbody>';
   renderVmChart(rows);
 }
@@ -996,7 +1013,7 @@ document.addEventListener('click', async e=>{
     unSort = unSort.key===k ? {key:k, dir:-unSort.dir} : {key:k, dir: k==='n' ? -1 : 1};
     renderUnmatched();
   }
-  else if (el.dataset.histopen){ $('#histPanel').classList.remove('hidden'); $('#histResult').innerHTML=''; $('#histText').focus(); }
+  else if (el.dataset.histopen){ $('#acct').open = false; showTab('sum'); $('#histPanel').classList.remove('hidden'); $('#histResult').innerHTML=''; $('#histPanel').scrollIntoView({block:'start'}); $('#histText').focus(); }
   else if (el.id==='histClose'){ $('#histPanel').classList.add('hidden'); }
   else if (el.id==='histImport'){
     const r = histImport($('#histText').value, +$('#histYear').value || 0);
@@ -1019,7 +1036,14 @@ document.addEventListener('click', async e=>{
     if (confirm('De rij van '+r.d.split('-').reverse().join('-')+' verwijderen?')){ vm.rows.splice(+el.dataset.vmdel,1); saveVm(); renderVm(); }
   }
   else if (el.id==='vmCopy'){ const ok = await copyText(vmTable().map(r=>r.join('\t')).join('\n')); toast(ok?'Gekopieerd, plak in Excel met Ctrl+V':'Kopiëren lukte niet'); }
-  else if (el.id==='vmPasteBtn'){ $('#vmPaste').classList.remove('hidden'); $('#vmPasteText').focus(); }
+  else if (el.id==='vmPasteBtn'){ $('#acct').open = false; showTab('vm'); $('#vmPaste').classList.remove('hidden'); $('#vmResult').innerHTML=''; $('#vmPaste').scrollIntoView({block:'start'}); $('#vmPasteText').focus(); }
+  else if (el.dataset.vmcur){
+    const d = el.dataset.vmcur;
+    if (!vm.rows.some(r=>r.d===d)){ vm.rows.push({d}); saveVm(); }
+    renderVm();
+    const tr = [...document.querySelectorAll('#vm tbody tr')].find(tr=>tr.querySelector('input[type=date]')?.value===d);
+    if (tr){ tr.scrollIntoView({block:'center'}); tr.querySelector('input[inputmode=decimal]')?.focus(); }
+  }
   else if (el.id==='vmPasteCancel'){ $('#vmPaste').classList.add('hidden'); }
   else if (el.id==='vmImport'){
     const txt = $('#vmPasteText').value;
@@ -1328,6 +1352,17 @@ document.addEventListener('click', async e=>{
   else if (b.id==='aLock'){ await KeyStore.del(Cloud.uid); resetKeepUser(); showGate('unlock', 'Vergrendeld. Het wachtwoord is van dit apparaat verwijderd.'); }
   else if (b.id==='aChange'){ $('#acct').open = false; showGate('change'); }
   else if (b.id==='aBackup'){ $('#acct').open = false; $('#exp').click(); }
+  else if (b.id==='aWipe'){
+    $('#acct').open = false;
+    if (!confirm('Alle gegevens wissen?\n\nDit wist (ook online): alle banktransacties, handmatige indelingen, de Excel-historie en alle maanden bij Vermogen.\n\nDe instellingen bij Vermogen (waarde huis, maandbedrag familiehypotheek) blijven bewaard.\n\nTip: download eerst een back-up via het menu als je twijfelt.')) return;
+    const keepRules = confirm('Trefwoorden bewaren?\n\nOK = je trefwoorden blijven staan (handig voor volgend jaar).\nAnnuleren = trefwoorden terug naar de standaard.');
+    storedTx = []; files.forEach(f=>droppedSrc.add(f.id)); files = [];
+    overrides = {}; hist = {}; vm = {settings: vm.settings || {}, rows: []};
+    if (!keepRules) rules = Object.assign({}, D);
+    selMonth = ''; $('#rules').dataset.done = '';
+    rebuild(); renderVm(); Cloud.dirty('main');
+    toast('Alle gegevens gewist' + (keepRules ? ', trefwoorden bewaard' : ''));
+  }
 });
 document.addEventListener('keydown', e=>{
   if (e.key!=='Enter' || !e.target.closest('#gate')) return;

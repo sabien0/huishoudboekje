@@ -445,13 +445,25 @@ function guessNoHeader(data, d, n){
   }
   return {date, amount, sign:-1, name:-1, own:-1};
 }
+// Codes die banken in de omschrijving zetten. Dit zijn nooit namen en nooit goede trefwoorden.
+const BANKCODES = new Set(['bea','gea','ba','ic','ov','ovb','inc','idb','id','ideal','sepa','eur','nr','pas','pasnr','betaalautomaat','geldautomaat','incasso','overboeking','overschrijving','acceptgiro','periodieke','debit','credit','af','bij','pinbetaling','contactloos','betaling','transactie','termijn']);
 function extractName(t){
   let m = t.match(/\/name\/([^/]+)/i); if (m) return m[1].trim();
   m = t.match(/naam:\s*(.+?)(?=\s+(omschrijving|kenmerk|machtiging|iban|bic|mandaat):|$)/i); if (m) return m[1].trim();
-  m = t.match(/\b(?:bea|gea)\b.*?\d{2}[.:]\d{2}\s+(.+?)(?:,\s*pas|$)/i); if (m) return m[1].trim().slice(0,50);
-  // Omschrijving die begint met een IBAN (ASN): "DE75 2022 0800 ... Vinted via Mangopay SA 7IJHJAC ..."
-  const rest = t.replace(/^[A-Z]{2}\d{2}(\s?[A-Z0-9]{4}){2,7}(\s?[A-Z0-9]{1,3})?\s+/i, '');
-  const words = []; for (const w of rest.split(' ')){ if (/\d/.test(w) || words.length>=6) break; words.push(w); }
+  // ABN AMRO pinbetaling: "BEA NR:XX123 04.09.26/12.30 JUMBO UTRECHT,PAS123"
+  m = t.match(/\b(?:bea|gea)\b.*?\/\d{2}[.:]\d{2}\s+(.+?)(?:,\s*pas|$)/i); if (m) return m[1].trim().slice(0,50);
+  // Omschrijving vol codes (o.a. ASN): "NL24ASNB… 02-10-2026 7913 BEA 3078539 5398 Nettorama >HOOGLANDE 2.10.2026 15U49 K"
+  // of "DE75 2022 0800 0000 0191 90 Vinted via Mangopay SA 7IJHJAC …". IBAN's, datums, nummers en bankcodes overslaan;
+  // de naam stopt bij ">" (plaats), een komma of het volgende woord met cijfers.
+  const toks = t.replace(/^[A-Z]{2}\d{2}(\s[A-Z0-9]{4}){2,7}(\s[A-Z0-9]{1,3})?\s+/i, '').split(/\s+/);
+  const words = []; let started = false;
+  for (const w of toks){
+    const lw = w.toLowerCase().replace(/[:.]+$/,'');
+    if (!started){ if (!w || /\d/.test(w) || BANKCODES.has(lw) || /^[^a-z]+$/i.test(w)) continue; started = true; }
+    if (w.startsWith('>') || /\d/.test(w) || words.length>=6) break;
+    if (w.includes(',')){ const p = w.split(',')[0]; if (p) words.push(p); break; }
+    words.push(w);
+  }
   if (words.length) return words.join(' ');
   return t.slice(0,50);
 }
@@ -500,7 +512,8 @@ function compileRules(){
   compiled = [];
   for (const id in rules){
     if (!CATMAP[id]) continue;
-    String(rules[id]||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean).forEach(k=>{
+    // Bankcodes als "bea" of "ba" slaan we over: die staan in bijna elke transactie
+    String(rules[id]||'').split(',').map(s=>s.trim().toLowerCase()).filter(k=>k && !BANKCODES.has(k)).forEach(k=>{
       compiled.push({id, k, re:new RegExp('(^|[^a-z])'+reEsc(k)+'(?![a-z])')});
     });
   }
@@ -957,6 +970,11 @@ function assignPick(ctx, c){
   if (ctx.startsWith('u:')){
     const i = ctx.slice(2), kw = ($('#uk'+i).value || '').trim().toLowerCase().replace(/\s+/g,' ');
     if (!kw){ toast('Vul eerst een trefwoord in'); return; }
+    if (BANKCODES.has(kw)){
+      const inp = $('#uk'+i); inp.classList.add('bad'); inp.focus();
+      showUndo(`"${kw}" is een bankcode die in veel transacties staat. Typ de naam van de winkel, bijv. "nettorama".`, null);
+      return;
+    }
     // Controle vooraf: past het trefwoord wel op deze transactie?
     const g = lastUnList[+i], re = new RegExp('(^|[^a-z])'+reEsc(kw)+'(?![a-z])');
     if (g && !kwMatches(re, g.ex)){
@@ -1350,6 +1368,9 @@ async function loadAll(main){
   const docs = await Backend.getTx(Cloud.uid);
   const all = []; Cloud.savedTx = {};
   for (const doc of docs){ const arr = await unseal(doc.data); Cloud.savedTx[doc.id] = JSON.stringify(arr); all.push(...unpackTx(arr)); }
+  // Namen die vroeger verkeerd uit de omschrijving werden gehaald (bijv. "NL24ASNB… BEA …") opnieuw bepalen
+  Cloud.nameFixes = 0;
+  all.forEach(t=>{ if (t.desc && t.name && t.desc.slice(0,50)===t.name){ const n = extractName(t.desc); if (n && n!==t.name){ t.name = n; t.ntext = null; Cloud.nameFixes++; } } });
   storedTx = all; files = []; droppedSrc.clear();
   Cloud.lastUpdated = (main && main.updated) || 0;
   $('#rules').dataset.done = '';
@@ -1368,6 +1389,7 @@ async function startApp(){
   const main = await Backend.getMain(Cloud.uid);
   await loadAll(main);
   Cloud.ready = true; setStatus('ok');
+  if (Cloud.nameFixes) Cloud.dirty('tx');   // herstelde namen online opslaan
   if (!Cloud.unwatch) Cloud.unwatch = Backend.watch(Cloud.uid, onRemote);
   hideGate();
 }

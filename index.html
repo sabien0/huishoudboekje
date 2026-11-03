@@ -447,8 +447,14 @@ function guessNoHeader(data, d, n){
 }
 // Codes die banken in de omschrijving zetten. Dit zijn nooit namen en nooit goede trefwoorden.
 const BANKCODES = new Set(['bea','gea','ba','ic','ov','ovb','inc','idb','id','ideal','sepa','eur','nr','pas','pasnr','betaalautomaat','geldautomaat','incasso','overboeking','overschrijving','acceptgiro','periodieke','debit','credit','af','bij','pinbetaling','contactloos','betaling','transactie','termijn']);
+// Betaalmethodes op je telefoon of horloge ("Google Pay", "Apple Pay") zeggen niets over de winkel: weglaten.
+// "Google Payment" of "Google One" (echte Google-afschrijvingen) blijven staan.
+const WALLET_SRC = '(^|[^a-z])(google|apple|samsung|garmin|fitbit|swatch)[\\s_*-]*pay(?![a-z])';
+const WALLET_TEST = new RegExp(WALLET_SRC, 'i');
+const stripWallet = s => String(s||'').replace(new RegExp(WALLET_SRC, 'gi'), '$1 ').replace(/\s+/g,' ').replace(/^[\s,*:-]+|[\s,*:-]+$/g,'').trim();
 function extractName(t){
-  let m = t.match(/\/name\/([^/]+)/i); if (m) return m[1].trim();
+  t = stripWallet(t);
+  let m =t.match(/\/name\/([^/]+)/i); if (m) return m[1].trim();
   m = t.match(/naam:\s*(.+?)(?=\s+(omschrijving|kenmerk|machtiging|iban|bic|mandaat):|$)/i); if (m) return m[1].trim();
   // ABN AMRO pinbetaling: "BEA NR:XX123 04.09.26/12.30 JUMBO UTRECHT,PAS123"
   m = t.match(/\b(?:bea|gea)\b.*?\/\d{2}[.:]\d{2}\s+(.+?)(?:,\s*pas|$)/i); if (m) return m[1].trim().slice(0,50);
@@ -458,10 +464,11 @@ function extractName(t){
   const toks = t.replace(/^[A-Z]{2}\d{2}(\s[A-Z0-9]{4}){2,7}(\s[A-Z0-9]{1,3})?\s+/i, '').split(/\s+/);
   const words = []; let started = false;
   for (const w of toks){
-    const lw = w.toLowerCase().replace(/[:.]+$/,'');
+    const lw = w.toLowerCase().replace(/[:.,;]+$/,'');
     if (!started){ if (!w || /\d/.test(w) || BANKCODES.has(lw) || /^[^a-z]+$/i.test(w)) continue; started = true; }
-    if (w.startsWith('>') || /\d/.test(w) || words.length>=6) break;
-    if (w.includes(',')){ const p = w.split(',')[0]; if (p) words.push(p); break; }
+    if (w.startsWith('>') || words.length>=6) break;
+    if (w.includes(',')){ const p = w.split(',')[0]; if (p && !/\d/.test(p)) words.push(p); break; }
+    if (/\d/.test(w)) break;
     words.push(w);
   }
   if (words.length) return words.join(' ');
@@ -482,7 +489,8 @@ function buildTx(f){
       else if (/^(bij|c|credit)$/.test(s)) amt = Math.abs(amt);
     }
     const text = r.filter((_,i)=>!skip.has(i)).join(' ').replace(/\s+/g,' ').trim();
-    const name = (m.name>=0 && String(r[m.name]||'').trim()) ? String(r[m.name]).trim() : extractName(text);
+    const rawName = (m.name>=0 && String(r[m.name]||'').trim()) ? String(r[m.name]).trim() : '';
+    const name = (rawName && stripWallet(rawName)) || extractName(text);
     const desc = r.filter((_,i)=>!skip.has(i) && i!==m.name).join(' ').replace(/\s+/g,' ').trim();
     out.push({date, month:date.slice(0,7), amt, name, desc, text:text.toLowerCase(),
               key: date+'|'+amt.toFixed(2)+'|'+text.toLowerCase().slice(0,80)});
@@ -888,8 +896,9 @@ const normName = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-
   .split(/\s+/).map(w=>{ const d = (w.match(/\d/g)||[]).length, l = (w.match(/[a-z]/g)||[]).length; return d >= l ? '' : w.replace(/\d+/g,' '); }).join(' ')
   .replace(/[^a-z&.\- ]/g,' ').replace(/(^|\s)[.\-]+|[.\-]+(?=\s|$)/g,' ').replace(/\s+/g,' ').trim();
 // Trefwoorden zoeken in de letterlijke tekst én in de opgeschoonde tekst
-const normText = t => t.ntext || (t.ntext = normName(t.text));
-const kwMatches = (re, t) => re.test(t.text) || re.test(normText(t));
+const matchText = t => t.mtext || (t.mtext = stripWallet(t.text));
+const normText = t => t.ntext || (t.ntext = normName(matchText(t)));
+const kwMatches = (re, t) => re.test(matchText(t)) || re.test(normText(t));
 
 // ---------- Voorstellen: welke categorie past waarschijnlijk? ----------
 // Losse woorden die vaak in een naam of omschrijving staan. Dit zijn alleen voorstellen; jij kiest.
@@ -1373,7 +1382,12 @@ async function loadAll(main){
   for (const doc of docs){ const arr = await unseal(doc.data); Cloud.savedTx[doc.id] = JSON.stringify(arr); all.push(...unpackTx(arr)); }
   // Namen die vroeger verkeerd uit de omschrijving werden gehaald (bijv. "NL24ASNB… BEA …") opnieuw bepalen
   Cloud.nameFixes = 0;
-  all.forEach(t=>{ if (t.desc && t.name && t.desc.slice(0,50)===t.name){ const n = extractName(t.desc); if (n && n!==t.name){ t.name = n; t.ntext = null; Cloud.nameFixes++; } } });
+  all.forEach(t=>{
+    let n = t.name;
+    if (t.desc && n && t.desc.slice(0,50)===n) n = extractName(t.desc);
+    else if (WALLET_TEST.test(n)) n = stripWallet(n) || extractName(t.desc || t.text);
+    if (n && n!==t.name){ t.name = n; t.ntext = null; Cloud.nameFixes++; }
+  });
   storedTx = all; files = []; droppedSrc.clear();
   Cloud.lastUpdated = (main && main.updated) || 0;
   $('#rules').dataset.done = '';

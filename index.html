@@ -23,6 +23,16 @@ body.locked main{visibility:hidden}
 .acct summary::-webkit-details-marker{display:none}
 .acctmenu{position:absolute;right:0;top:36px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:230px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
 .acctmenu button{text-align:left}
+.pick{display:flex;flex-wrap:wrap;gap:5px;max-width:560px;white-space:normal}
+td.pickcell{white-space:normal;min-width:260px}
+.chip{--c:var(--muted);font-size:12px;line-height:1.3;padding:4px 10px;border-radius:999px;border:1px solid var(--c);background:color-mix(in srgb, var(--c) 16%, var(--card));color:var(--ink);cursor:pointer}
+.chip:hover{background:color-mix(in srgb, var(--c) 34%, var(--card))}
+.chip.ghost{--c:var(--line);background:transparent;color:var(--muted)}
+.chip.sugg{font-weight:600;padding:5px 12px;background:color-mix(in srgb, var(--c) 28%, var(--card))}
+.chip.cur{text-align:left}
+input.kw{width:170px}
+.undobar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;display:flex;gap:12px;align-items:center;background:var(--ink);color:var(--bg);padding:8px 10px 8px 14px;border-radius:9px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.undobar button{background:transparent;color:var(--bg);border-color:var(--bg);white-space:nowrap}
 .menuhead{margin-top:6px;border-top:1px solid var(--line);padding-top:8px}
 .acctmenu .menuhead:first-of-type{margin-top:4px}
 .acctmenu button.danger{color:var(--warn);border-color:var(--warn)}
@@ -190,7 +200,7 @@ textarea{font:12px ui-monospace,Consolas,monospace;width:100%;min-height:120px;c
       <div class="card notxmsg muted">Laad eerst een bankbestand hierboven.</div>
       <div class="card needtx">
         <h2>Niet ingedeeld</h2>
-        <p class="muted small" style="margin-top:0">Gegroepeerd per tegenpartij. Pas het trefwoord eventueel aan, kies een categorie en klik op Toevoegen. Daarna worden ook toekomstige transacties met dat trefwoord automatisch ingedeeld.</p>
+        <p class="muted small" style="margin-top:0">Gegroepeerd per tegenpartij. Klik op het <b>✓ voorstel</b>, of kies een groep en daarna de subcategorie. Het trefwoord wordt onthouden, dus bij je volgende upload gaat het vanzelf goed. Maak het trefwoord eventueel korter (bijv. "vinted" in plaats van "vinted via mangopay sa") als het algemener moet.</p>
         <div class="scroll"><table id="un"></table></div>
       </div>
     </section>
@@ -258,6 +268,7 @@ textarea{font:12px ui-monospace,Consolas,monospace;width:100%;min-height:120px;c
   </div>
 </main>
 <div class="toast" id="toast"></div>
+<div class="undobar hidden" id="undoBar"><span></span><button id="undoBtn">Ongedaan maken</button></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -855,30 +866,124 @@ function catOptions(selected, withAuto){
 }
 const normName = s => String(s||'').toLowerCase().replace(/\S*\d\S*/g,' ').replace(/[^a-z&.\- ]/g,' ').replace(/\s+/g,' ').trim();
 
+// ---------- Voorstellen: welke categorie past waarschijnlijk? ----------
+// Losse woorden die vaak in een naam of omschrijving staan. Dit zijn alleen voorstellen; jij kiest.
+const HINTS = {
+  'Uitgaven|Leven (nodig)|Boodschappen': 'bakker, bakkerij, slager, slagerij, groente, groenteboer, fruit, kaas, kaasboer, markt, toko, supermarkt, visboer, vishandel, poelier, boodschappen, delicatessen, biologisch',
+  "Uitgaven|Leven (extra's)|Uit eten/drinken": 'restaurant, cafe, café, bar, pizza, pizzeria, sushi, burger, eetcafe, lunch, lunchroom, koffie, coffee, espresso, bistro, grill, kebab, doner, snack, snackbar, friet, frites, ijs, ijssalon, horeca, brouwerij, brasserie, thai, wok, ramen, taverne, proeflokaal, tapas, poke, bagel, croissant',
+  "Uitgaven|Leven (extra's)|Uitjes": 'bioscoop, cinema, museum, theater, schouwburg, concert, ticket, tickets, dierentuin, zoo, pretpark, escape, bowling, festival, kaartjes, attractie, sauna, wellness, spa',
+  "Uitgaven|Leven (extra's)|Vakantie": 'hotel, camping, hostel, vlucht, airline, airlines, airport, luchthaven, resort, ferry, vakantiepark, bungalow, expedia',
+  "Uitgaven|Leven (extra's)|Sport": 'sport, sportschool, fitness, gym, yoga, zwembad, zwem, padel, tennis, voetbal, hockey, klim, boulder, crossfit, pilates, golf, schaats, ski',
+  "Uitgaven|Vervoer|Auto (extra's)": 'tank, tankstation, benzine, brandstof, parkeer, parkeren, parking, garage, apk, wasstraat, carwash, laadpaal, opladen, charging, autoverhuur, tol',
+  'Uitgaven|Vervoer|OV': 'trein, bus, tram, metro, ovpay, ov-pay, ov chip, reizigers',
+  'Uitgaven|Vervoer|Diversen': 'fiets, fietsenmaker, rijwiel, taxi, uber, bolt, deelfiets, scooter',
+  'Uitgaven|Leven (nodig)|Huisdier': 'dier, dieren, dierenarts, dierenwinkel, hond, hondenschool, kat, katten, pet, pets, trimsalon',
+  'Uitgaven|Leven (nodig)|Drogist': 'drogist, drogisterij, parfumerie',
+  'Uitgaven|Verzekering|Zorg (eigen risico)': 'apotheek, tandarts, mondzorg, fysio, fysiotherapie, huisarts, ziekenhuis, orthodont, kliniek, opticien, lab',
+  'Uitgaven|Huis|Gemeente': 'gemeente, belasting, belastingen, waterschap, afvalstoffen',
+  'Uitgaven|Huis|Dingen voor huis': 'bouwmarkt, meubel, meubels, wonen, interieur, woonwinkel, keuken, verf, tuin, tuincentrum, bloem, bloemen, bloemist, plant, planten, lampen, gordijn, matras, beddenspecialist',
+  'Uitgaven|Leven (nodig)|Cadeaus + Goede doel': 'cadeau, cadeaus, gift, donatie, stichting, goede doel, fonds',
+  'Uitgaven|Verzekering|WA en inboedel': 'verzekering, verzekeringen, polis',
+  'Uitgaven|Abonnementen|Streaming': 'streaming, music, podcast',
+  'Uitgaven|Leven (nodig)|Diversen': 'kapper, kapsalon, barbier, hairstudio, nagel, schoenmaker, stomerij, wasserette, vinted, marktplaats, postnl, kleding',
+  'Uitgaven|Leven (nodig)|Bankkosten': 'kosten, provisie'
+};
+const hintRules = [];
+for (const id in HINTS) HINTS[id].split(',').map(s=>s.trim()).filter(Boolean).forEach(k=>hintRules.push({id, k, re:new RegExp('(^|[^a-z])'+reEsc(k))}));
+hintRules.sort((a,b)=>b.k.length-a.k.length);
+// Eerder handmatig gekozen categorie voor dezelfde tegenpartij (in Transacties)
+function learnedMap(){
+  const m = {};
+  tx.forEach(t=>{ if (overrides[t.key] && CATMAP[overrides[t.key]]){ const k = normName(t.name); if (k) m[k] = overrides[t.key]; } });
+  return m;
+}
+function suggest(t, k, learned){
+  if (learned[k]) return {id:learned[k], why:'eerder zo gekozen'};
+  for (const h of hintRules) if (h.re.test(t.text)) return {id:h.id, why:'herkend aan "'+h.k+'"'};
+  return null;
+}
+
+// ---------- Categoriekiezer met kleuren (eerst groep, dan subcategorie) ----------
+function groupColor(sec, g){ if (COLORS[g]) return COLORS[g]; if (sec==='Inkomsten') return g==='Salaris' ? '#3d8b6d' : '#6aab8e'; return '#8a8a8a'; }
+const catColor = id => CATMAP[id] ? groupColor(CATMAP[id].sec, CATMAP[id].group) : 'var(--warn)';
+const GROUPS = [];
+CATS.forEach(c=>{ const key = c.sec+'|'+c.group; let g = GROUPS.find(x=>x.key===key); if (!g){ g = {key, sec:c.sec, group:c.group, color:groupColor(c.sec,c.group), cats:[]}; GROUPS.push(g); } g.cats.push(c); });
+let pickOpen = {};       // per rij: welke groep staat open ('*' = alle groepen)
+const groupName = g => g.sec==='Inkomsten' && g.group==='Diversen' ? 'Overige inkomsten' : g.group;
+function pickerHTML(ctx, open, amt, extra='', canClose=true){
+  const close = canClose ? `<button class="chip ghost" data-pctx="${esc(ctx)}" data-pg="close" title="Sluiten">×</button>` : '';
+  if (open && open!=='*'){
+    const g = GROUPS.find(x=>x.key===open);
+    return `<div class="pick"><button class="chip ghost" data-pctx="${esc(ctx)}" data-pg="*" title="Terug">‹ ${esc(groupName(g))}</button>`
+      + g.cats.map(c=>`<button class="chip" style="--c:${g.color}" data-pctx="${esc(ctx)}" data-pc="${esc(c.id)}">${esc(c.sub)}</button>`).join('') + '</div>';
+  }
+  const rank = g => g.sec==='Uitgaven' ? 1 : g.sec==='Sparen en beleggen' ? 2 : g.sec==='Inkomsten' ? (amt>0 ? 0 : 3) : 4;
+  return `<div class="pick">` + [...GROUPS].sort((a,b)=>rank(a)-rank(b)).map(g=> g.cats.length===1
+      ? `<button class="chip" style="--c:${g.color}" data-pctx="${esc(ctx)}" data-pc="${esc(g.cats[0].id)}">${esc(g.cats[0].sub===g.group ? g.group : g.group+' – '+g.cats[0].sub)}</button>`
+      : `<button class="chip" style="--c:${g.color}" data-pctx="${esc(ctx)}" data-pg="${esc(g.key)}">${esc(groupName(g))} ›</button>`).join('')
+    + extra + close + '</div>';
+}
+let lastUnList = [];
+function pickCell(ctx, tObj){
+  const st = pickOpen[ctx];
+  if (ctx.startsWith('u:')){
+    const g = lastUnList[+ctx.slice(2)]; if (!g) return '';
+    if (g.sug && !st) return `<div class="pick"><button class="chip sugg" style="--c:${catColor(g.sug.id)}" data-pctx="${esc(ctx)}" data-pc="${esc(g.sug.id)}" title="Voorstel: ${esc(g.sug.why)}">✓ ${esc(label(g.sug.id))}</button><button class="chip ghost" data-pctx="${esc(ctx)}" data-pg="*">Andere…</button></div>`;
+    return pickerHTML(ctx, st, g.sum, '', !!g.sug);
+  }
+  const key = ctx.slice(2), t = tObj || tx.find(x=>x.key===key); if (!t) return '';
+  const ov = overrides[t.key];
+  if (!st) return `<button class="chip cur" style="--c:${catColor(t.cat)}" data-pctx="${esc(ctx)}" data-pg="*" title="Klik om te wijzigen">${esc(label(t.cat))}${ov?' ✎':''}</button>`
+    + (t.by && !ov ? ` <span class="small muted">via "${esc(t.by)}"</span>` : '');
+  return pickerHTML(ctx, st, t.amt, ov ? `<button class="chip ghost" data-pctx="${esc(ctx)}" data-pc="">Automatisch</button>` : '');
+}
+let lastUndo = null;
+function showUndo(text, undo){
+  lastUndo = undo; const b = $('#undoBar');
+  b.querySelector('span').textContent = text; b.classList.remove('hidden');
+  clearTimeout(b._h); b._h = setTimeout(()=>b.classList.add('hidden'), 9000);
+}
+function assignPick(ctx, c){
+  if (ctx.startsWith('u:')){
+    const i = ctx.slice(2), kw = ($('#uk'+i).value || '').trim().toLowerCase();
+    if (!kw){ toast('Vul eerst een trefwoord in'); return; }
+    rules[c] = (rules[c] ? rules[c]+', ' : '') + kw; saveRules();
+    $('#rules').dataset.done = ''; pickOpen = {}; recat();
+    showUndo(`"${kw}" → ${label(c)}. Voortaan automatisch.`, ()=>{ rules[c] = String(rules[c]||'').split(',').map(s=>s.trim()).filter(s=>s && s!==kw).join(', '); saveRules(); $('#rules').dataset.done=''; recat(); });
+  } else {
+    const key = ctx.slice(2), prev = overrides[key];
+    if (c) overrides[key] = c; else delete overrides[key];
+    saveOverrides(); delete pickOpen[ctx]; recat();
+    showUndo(c ? `Transactie → ${label(c)}` : 'Transactie weer automatisch', ()=>{ if (prev) overrides[key] = prev; else delete overrides[key]; saveOverrides(); recat(); });
+  }
+}
+
 // Standaard: grootste uitgaven bovenaan. Trefwoord A→Z, Aantal hoog→laag bij eerste klik.
 let unSort = {key:'sum', dir:1};
 function renderUnmatched(){
-  const groups = {};
+  for (const k in pickOpen) if (k.startsWith('u:')) delete pickOpen[k];
+  const groups = {}, learned = learnedMap();
   tx.filter(t=>!t.cat).forEach(t=>{
     const k = normName(t.name) || normName(t.desc).slice(0,30) || '(onbekend)';
-    const g = groups[k] = groups[k] || {k, n:0, sum:0, ex:t};
+    const g = groups[k] = groups[k] || {k, n:0, sum:0, ex:t, sug:null};
     g.n++; g.sum += t.amt;
+    if (!g.sug) g.sug = suggest(t, k, learned);
   });
   const {key, dir} = unSort;
   const list = Object.values(groups).sort((a,b)=> dir * (key==='k' ? a.k.localeCompare(b.k,'nl') : a[key]-b[key]) || a.k.localeCompare(b.k,'nl'));
+  lastUnList = list.slice(0,300);
   $('#unCount').textContent = list.length ? '('+tx.filter(t=>!t.cat).length+')' : '';
   if (!list.length){ $('#un').innerHTML = '<tr><td class="muted">Alles is ingedeeld. 🎉</td></tr>'; return; }
-  const opts = catOptions('', false);
   const th = (k, l, cls='') => `<th class="sort ${cls}" data-usort="${k}" title="Klik om te sorteren">${l}${key===k ? (dir>0?' ▲':' ▼') : ''}</th>`;
-  $('#un').innerHTML = `<thead><tr>${th('k','Trefwoord')}<th>Voorbeeld</th>${th('n','Aantal','n')}${th('sum','Totaal','n')}<th>Categorie</th><th></th></tr></thead><tbody>`
-    + list.slice(0,300).map((g,i)=>`<tr><td><input type="text" value="${esc(g.k)}" id="uk${i}"></td>
+  $('#un').innerHTML = `<thead><tr>${th('k','Trefwoord')}<th>Voorbeeld</th>${th('n','Aantal','n')}${th('sum','Totaal','n')}<th>Categorie</th></tr></thead><tbody>`
+    + lastUnList.map((g,i)=>`<tr><td><input type="text" class="kw" value="${esc(g.k)}" id="uk${i}" title="Op dit woord wordt voortaan automatisch ingedeeld. Maak het korter als het algemener moet, bijv. alleen 'vinted'."></td>
       <td class="wrap small muted">${esc(g.ex.name)} · ${esc(g.ex.desc.slice(0,90))}</td>
       <td class="n">${g.n}</td><td class="n ${g.sum<0?'neg':''}">${eur(g.sum)}</td>
-      <td><select id="uc${i}"><option value="">Kies…</option>${opts}</select></td>
-      <td><button data-add="${i}">Toevoegen</button></td></tr>`).join('') + '</tbody>';
+      <td class="pickcell">${pickCell('u:'+i)}</td></tr>`).join('') + '</tbody>';
 }
 
 function renderTx(){
+  for (const k in pickOpen) if (k.startsWith('t:')) delete pickOpen[k];
   const months = [...new Set(tx.map(t=>t.month))].sort();
   $('#fMonth').innerHTML = `<option value="">Alle maanden</option>` + months.map(m=>`<option value="${m}" ${m===filt.month?'selected':''}>${monthLabel(m)}</option>`).join('');
   $('#fCat').innerHTML = `<option value="">Alle categorieën</option><option value="?in,?out" ${filt.cat==='?in,?out'?'selected':''}>Niet ingedeeld</option>` + catOptions(filt.cat, false)
@@ -894,7 +999,7 @@ function renderTx(){
   $('#tx').innerHTML = `<thead><tr><th>Datum</th><th>Naam</th><th>Omschrijving</th><th class="n">Bedrag</th><th>Categorie</th></tr></thead><tbody>`
     + shown.map(t=>`<tr><td>${t.date}</td><td>${esc(t.name.slice(0,40))}</td><td class="wrap small muted">${esc(t.desc.slice(0,120))}</td>
       <td class="n ${t.amt<0?'neg':''}">${eur(t.amt)}</td>
-      <td><select data-key="${esc(t.key)}">${overrides[t.key] ? catOptions(overrides[t.key], true) : `<option value="">${esc(label(t.cat))}${t.by?' (via "'+esc(t.by)+'")':''}</option>`+catOptions('',false)}</select></td></tr>`).join('') + '</tbody>';
+      <td class="pickcell">${pickCell('t:'+t.key, t)}</td></tr>`).join('') + '</tbody>';
 }
 
 function renderRules(){
@@ -1008,6 +1113,13 @@ function showTab(name){
 document.addEventListener('click', async e=>{
   const el = e.target.closest('button, td.click, th[data-usort], a[data-histclear], #mGroups [data-ids]'); if (!el) return;
   if (el.dataset.tab) showTab(el.dataset.tab);
+  else if (el.dataset.pctx !== undefined){
+    const ctx = el.dataset.pctx;
+    if (el.dataset.pc !== undefined){ assignPick(ctx, el.dataset.pc); return; }
+    if (el.dataset.pg==='close') delete pickOpen[ctx]; else pickOpen[ctx] = el.dataset.pg;
+    const td = el.closest('td'); if (td) td.innerHTML = pickCell(ctx);
+  }
+  else if (el.id==='undoBtn'){ $('#undoBar').classList.add('hidden'); if (lastUndo){ const u = lastUndo; lastUndo = null; u(); toast('Ongedaan gemaakt'); } }
   else if (el.dataset.usort){
     const k = el.dataset.usort;
     unSort = unSort.key===k ? {key:k, dir:-unSort.dir} : {key:k, dir: k==='n' ? -1 : 1};
